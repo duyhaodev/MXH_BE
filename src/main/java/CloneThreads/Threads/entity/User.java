@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -13,14 +14,35 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String username;
-    String name;
+    UUID id;
+
+    @Column(nullable = false, unique = true, length = 255)
     String email;
-    String password;
-    LocalDate birthDate;
+
+    @Column(nullable = false, unique = true, length = 50)
+    String username;
+
+    @Column(name = "password_hash")
+    String passwordHash;
+
+    @Column(name = "full_name")
+    String fullName;
+
+    String bio;
+
+    @Column(name = "avatar_url")
+    String avatarUrl;
+
+    @Column(name = "profile_link")
+    String profileLink;
+
+    @Column(name = "oauth_provider")
+    String oauthProvider;
+
+    @Column(name = "created_at")
+    LocalDateTime createdAt;
 }
