@@ -30,7 +30,9 @@ public class UserService {
         }
 
         User user = userMapper.toUser(request);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        //user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
