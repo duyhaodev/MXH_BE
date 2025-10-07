@@ -4,6 +4,7 @@ import CloneThreads.Threads.dto.request.UserCreationRequest;
 import CloneThreads.Threads.dto.response.UserResponse;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.exception.AppException;
+import CloneThreads.Threads.exception.ErrorCode;
 import CloneThreads.Threads.mapper.UserMapper;
 import CloneThreads.Threads.repository.UserRepository;
 import lombok.AccessLevel;
@@ -21,15 +22,17 @@ import org.springframework.stereotype.Service;
 public class UserService {
     UserRepository userRepository;
     private final UserMapper userMapper;
+    PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(UserCreationRequest request){
         if (userRepository.existsByEmail(request.getEmail())){
-            throw new AppException("email is already exists");
+            throw new AppException(ErrorCode.USER_EXISTED);
         }
 
         User user = userMapper.toUser(request);
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        //user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
     }

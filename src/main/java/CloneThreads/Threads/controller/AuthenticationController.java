@@ -21,7 +21,7 @@ public class AuthenticationController {
     AuthenticationService authenticationService;
     private final RestClient.Builder builder;
 
-    @PostMapping("/login")
+    @PostMapping("/token")
     ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder()
