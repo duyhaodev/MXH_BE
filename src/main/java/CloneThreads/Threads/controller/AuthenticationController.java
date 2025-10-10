@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClient;
 
 @RestController
 @RequestMapping("/auth")
@@ -19,7 +18,6 @@ import org.springframework.web.client.RestClient;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
     AuthenticationService authenticationService;
-    private final RestClient.Builder builder;
 
     @PostMapping("/token")
     ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {

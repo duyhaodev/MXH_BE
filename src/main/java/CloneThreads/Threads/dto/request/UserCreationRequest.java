@@ -15,10 +15,10 @@ import java.time.LocalDate;
 @Builder
 public class UserCreationRequest {
     @NotBlank(message = "USERNAME_NOT_BLANK")
-    String username;
+    String userName;
 
-    @NotBlank(message = "NAME_NOT_BLANK")
-    String name;
+    @NotBlank(message = "FULLNAME_NOT_BLANK")
+    String fullName;
 
     @NotBlank(message = "EMAIL_NOT_BLANK")
     @Email(message = "EMAIL_INVALID")
@@ -26,6 +26,4 @@ public class UserCreationRequest {
 
     @Size(min = 6, message = "PASSWORD_INVALID")
     String password;
-
-    LocalDate birthDate;
 }
