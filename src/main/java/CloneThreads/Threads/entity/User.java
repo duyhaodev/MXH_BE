@@ -23,8 +23,8 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     String email;
 
-    @Column(nullable = false, unique = true, length = 50)
-    String username;
+    @Column(name = "user_name", nullable = false, unique = true, length = 50)
+    String userName;
 
     @Column(name = "password_hash")
     String passwordHash;
@@ -45,4 +45,11 @@ public class User {
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

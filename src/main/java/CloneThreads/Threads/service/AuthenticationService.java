@@ -35,7 +35,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
-
     PasswordEncoder passwordEncoder;
 
     @NonFinal
@@ -75,7 +74,7 @@ public class AuthenticationService {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getUsername())
+                .subject(user.getUserName())
                 .issuer("Threads")
                 .issueTime(new Date())
                 .expirationTime(new Date(
