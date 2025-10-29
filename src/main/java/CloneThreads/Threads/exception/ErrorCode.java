@@ -8,13 +8,14 @@ import org.springframework.http.HttpStatusCode;
 public enum ErrorCode {
     INVALID_KEY(1001, "Invalid message key",  HttpStatus.BAD_REQUEST),
     USER_EXISTED(1002, "User already existed", HttpStatus.INTERNAL_SERVER_ERROR),
-    UNAUTHENTICATED(1003, "Incorrect email or password", HttpStatus.UNAUTHORIZED),
+    UNAUTHENTICATED(1003, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1004, "You do not have permission", HttpStatus.FORBIDDEN),
     PASSWORD_INVALID(1005, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
     EMAIL_INVALID(1006, "Invalid email address", HttpStatus.BAD_REQUEST),
     USERNAME_NOT_BLANK(1007, "Username must not be blank", HttpStatus.BAD_REQUEST),
     FULLNAME_NOT_BLANK(1008, "Full name must not be blank", HttpStatus.BAD_REQUEST),
     EMAIL_NOT_BLANK(1009, "Email must not be blank", HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND(1010, "User not found", HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
     ;
 
