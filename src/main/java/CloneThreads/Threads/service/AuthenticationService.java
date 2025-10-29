@@ -1,8 +1,10 @@
 package CloneThreads.Threads.service;
 
 import CloneThreads.Threads.dto.request.AuthenticationRequest;
+import CloneThreads.Threads.dto.request.IntrospectRequest;
 import CloneThreads.Threads.dto.request.LogoutRequest;
 import CloneThreads.Threads.dto.response.AuthenticationResponse;
+import CloneThreads.Threads.dto.response.IntrospectResponse;
 import CloneThreads.Threads.entity.InvalidatedToken;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.exception.AppException;
@@ -51,6 +53,22 @@ public class AuthenticationService {
 
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
+
+    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
+        var token = request.getToken();
+
+        boolean isValid = true;
+
+        try {
+            verifyToken(token, false);
+        } catch (AppException e) {
+            isValid = false;
+        }
+
+        return IntrospectResponse.builder()
+                .valid(isValid)
+                .build();
+    }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = userRepository.findByEmail(request.getEmail())
