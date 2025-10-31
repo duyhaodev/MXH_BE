@@ -16,9 +16,10 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    @Column(length = 36, updatable = false, nullable = false)
+    String id;
 
     @Column(nullable = false, unique = true, length = 255)
     String email;
@@ -48,6 +49,11 @@ public class User {
 
     @PrePersist
     public void prePersist() {
+        // tự sinh id kiểu chuỗi UUID
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
