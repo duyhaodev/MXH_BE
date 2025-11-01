@@ -33,6 +33,9 @@ public class Post {
     @Column(name = "media_url")
     String mediaUrl;
 
+    @Column(name = "media_public_id")
+    private String mediaPublicId;
+
     @Column(length = 20)
     String scope;
 
