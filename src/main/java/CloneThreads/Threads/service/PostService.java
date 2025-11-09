@@ -9,6 +9,10 @@ import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,10 +71,10 @@ public class PostService {
         return postMapper.toResponse(saved, user);
     }
 
-    // Giữ nguyên feed như cũ (có thể bạn muốn sort theo createdAt desc sau này)
     public List<PostResponse> getFeed(int page, int size) {
-        List<Post> posts = postRepository.findAll();
-        return posts.stream()
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Post> postPage = postRepository.findAll(pageable);  // ← chỉ lấy đúng page đó
+        return postPage.stream()
                 .map(post -> {
                     User user = userRepository.findById(post.getUserId()).orElse(null);
                     return postMapper.toResponse(post, user);
