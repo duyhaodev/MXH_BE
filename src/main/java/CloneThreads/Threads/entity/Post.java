@@ -18,10 +18,10 @@ import java.util.UUID;
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
     @Column(name = "user_id", nullable = false)
-    UUID userId;
+    String userId;
 
     @Column(columnDefinition = "TEXT")
     String content;

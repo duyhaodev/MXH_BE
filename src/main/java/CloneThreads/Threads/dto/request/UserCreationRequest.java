@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @Builder
 public class UserCreationRequest {
     @NotBlank(message = "USERNAME_NOT_BLANK")
-    String username;
+    String userName;
 
     @NotBlank(message = "NAME_NOT_BLANK")
     String name;
