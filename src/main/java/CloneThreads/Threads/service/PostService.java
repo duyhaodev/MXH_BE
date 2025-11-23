@@ -1,6 +1,7 @@
 package CloneThreads.Threads.service;
 
 import CloneThreads.Threads.dto.response.PostResponse;
+import CloneThreads.Threads.entity.Media;
 import CloneThreads.Threads.entity.Post;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.mapper.PostMapper;
@@ -30,50 +31,69 @@ public class PostService {
     private final PostMapper postMapper;
     private final Cloudinary cloudinary;
 
-    public PostResponse create(String userId, String content, MultipartFile image) throws IOException {
+    public PostResponse create(String userId, String content, List<MultipartFile> files) throws IOException {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        String mediaUrl = null;
-        String mediaType = null;
 
-        if (image != null && !image.isEmpty()) {
-            String contentType = image.getContentType();
-            String folder = "threads/posts/other";
-            String detectedType = null;
-
-            if (contentType != null) {
-                if (contentType.startsWith("image/")) {
-                    folder = "threads/posts/image";
-                    detectedType = "image";
-                } else if (contentType.startsWith("video/")) {
-                    folder = "threads/posts/video";
-                    detectedType = "video";
-                }
-            }
-            Map<String, Object> upload = cloudinary.uploader().upload(
-                    image.getBytes(),
-                    ObjectUtils.asMap(
-                            "folder", folder,
-                            "resource_type", "auto")
-            );
-            mediaUrl = (String) upload.get("secure_url");
-            mediaType = detectedType;
-        }
         Post post = Post.builder()
                 .userId(user.getId())
                 .content(content)
-                .mediaUrl(mediaUrl)
-                .mediaType(mediaType)
                 .scope("public")
                 .createdAt(LocalDateTime.now())
                 .build();
+
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) continue;
+
+                String contentType = file.getContentType();
+                String folder = "threads/posts/other";
+
+                if (contentType != null) {
+                    if (contentType.startsWith("image/")) {
+                        folder = "threads/posts/image";
+                    } else if (contentType.startsWith("video/")) {
+                        folder = "threads/posts/video";
+                    }
+                }
+
+                // Upload lên Cloudinary
+                Map<String, Object> upload = cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", folder,
+                                "resource_type", "auto"
+                        )
+                );
+
+                String mediaUrl = (String) upload.get("secure_url");
+                String mediaPublicId = (String) upload.get("public_id");
+                String detectedType = detectMediaType(contentType);
+
+                Media media = Media.builder()
+                        .mediaUrl(mediaUrl)
+                        .mediaPublicId(mediaPublicId)
+                        .mediaType(detectedType)
+                        .build();
+                post.addMedia(media);
+            }
+        }
+
         Post saved = postRepository.save(post);
         return postMapper.toResponse(saved, user);
     }
 
+    private String detectMediaType(String contentType) {
+        if (contentType == null) return "other";
+        if (contentType.startsWith("image/")) return "image";
+        if (contentType.startsWith("video/")) return "video";
+        return "other";
+    }
+
     public List<PostResponse> getFeed(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Post> postPage = postRepository.findAll(pageable);  // ← chỉ lấy đúng page đó
+        Page<Post> postPage = postRepository.findAll(pageable);
+
         return postPage.stream()
                 .map(post -> {
                     User user = userRepository.findById(post.getUserId()).orElse(null);
