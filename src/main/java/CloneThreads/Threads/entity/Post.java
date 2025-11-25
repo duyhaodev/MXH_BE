@@ -18,10 +18,10 @@ import java.util.UUID;
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
-    @Column(name = "user_id", nullable = false)
-    UUID userId;
+    @Column(name = "user_id", nullable = false, length = 36)
+    String userId;
 
     @Column(columnDefinition = "TEXT")
     String content;
@@ -32,6 +32,9 @@ public class Post {
     @Column(name = "media_url")
     String mediaUrl;
 
+    @Column(name = "media_public_id")
+    private String mediaPublicId;
+
     @Column(length = 20)
     String scope;
 
@@ -40,4 +43,15 @@ public class Post {
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

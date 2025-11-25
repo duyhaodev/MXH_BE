@@ -48,6 +48,11 @@ public class User {
 
     @PrePersist
     public void prePersist() {
+        // tự sinh id kiểu chuỗi UUID
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
