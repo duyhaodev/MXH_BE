@@ -101,4 +101,30 @@ public class PostService {
                 })
                 .collect(Collectors.toList());
     }
+    public List<PostResponse> getPostsByUserId(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        return posts.stream()
+                .map(post -> postMapper.toResponse(post, user))
+                .collect(Collectors.toList());
+    }
+    public List<PostResponse> getPostsByUsername(String username) {
+        // Tìm user theo username
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        return getPostsByUserId(user.getId());
+    }
+    public PostResponse getPostById(String postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        User user = userRepository.findById(post.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return postMapper.toResponse(post, user);
+    }
+
+
 }

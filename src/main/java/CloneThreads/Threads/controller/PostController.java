@@ -45,4 +45,35 @@ public class PostController {
     ) {
         return ResponseEntity.ok(postService.getFeed(page, size));
     }
+
+    // Xem profile của mình
+    @GetMapping("/profile")
+    public ResponseEntity<List<PostResponse>> getMyProfilePosts(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        // Lấy username từ JWT
+        String username = jwt.getSubject();
+        // Tìm user theo username
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        // Lấy bài viết theo userId
+        List<PostResponse> posts = postService.getPostsByUserId(user.getId());
+
+        return ResponseEntity.ok(posts);
+    }
+
+    // Xem profile của người khác
+    @GetMapping("/profile/{username}")
+    public ResponseEntity<List<PostResponse>> getUserProfilePosts(
+            @PathVariable String username
+    ) {
+        List<PostResponse> posts = postService.getPostsByUsername(username);
+        return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/posts/{postId}")
+    public ResponseEntity<PostResponse> getOne(@PathVariable String postId) {
+        return ResponseEntity.ok(postService.getPostById(postId));
+    }
+
 }

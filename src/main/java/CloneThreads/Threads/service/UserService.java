@@ -15,6 +15,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+
+import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -24,6 +30,7 @@ public class UserService {
     UserRepository userRepository;
     private final UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    private final Cloudinary cloudinary;
 
     public UserResponse createUser(UserCreationRequest request){
         if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByUserName(request.getUserName())){
@@ -52,4 +59,38 @@ public class UserService {
 
         return userMapper.toUserResponse(user);
     }
+
+    public UserResponse getUserByUsername(String username) {
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return userMapper.toUserResponse(user);
+    }
+
+    public UserResponse editProfile(String username, String fullName, String bio, MultipartFile avatar) throws IOException {
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (fullName != null) user.setFullName(fullName);
+        if (bio != null) user.setBio(bio);
+
+        if (avatar != null && !avatar.isEmpty()) {
+            Map upload = cloudinary.uploader().upload(
+                    avatar.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "threads/users/avatar",
+                            "resource_type", "image"
+                    )
+            );
+            String avatarUrl = (String) upload.get("secure_url");
+            user.setAvatarUrl(avatarUrl);
+        }
+
+        User saved = userRepository.save(user);
+        return userMapper.toUserResponse(saved);
+    }
+
+
+
+
 }

@@ -59,7 +59,7 @@ public class Post {
         if (mediaList == null) {
             mediaList = new ArrayList<>();
         }
-        media.setPost(this);
+        media.setPost(this); // gán post_id cho media
         mediaList.add(media);
     }
 }
