@@ -16,7 +16,7 @@ public interface PostRepository extends JpaRepository<Post, String> {
 //	    )
 //    List<Post> searchPosts(@Param("keyword") String keyword);
 	@Query(
-		    value = "SELECT p.*, u.full_name as authorName, u.username as authorUsername " +
+		    value = "SELECT p.*, u.full_name as authorName, u.user_name as authorUsername " +
 		            "FROM posts p " +
 		            "JOIN users u ON p.user_id = u.id " +
 		            "WHERE p.content ILIKE CONCAT('%', :keyword, '%')",

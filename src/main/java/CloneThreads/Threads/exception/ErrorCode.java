@@ -16,6 +16,7 @@ public enum ErrorCode {
     FULLNAME_NOT_BLANK(1008, "Full name must not be blank", HttpStatus.BAD_REQUEST),
     EMAIL_NOT_BLANK(1009, "Email must not be blank", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(1010, "User not found", HttpStatus.NOT_FOUND),
+    TOKEN_INVALID(1011, "Invalid token", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
     ;
 

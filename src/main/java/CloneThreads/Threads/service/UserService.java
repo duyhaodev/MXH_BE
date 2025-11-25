@@ -45,6 +45,7 @@ public class UserService {
 
     public UserResponse getMyInfo() {
         var context = SecurityContextHolder.getContext();
+        log.info(context.toString());
         String name = context.getAuthentication().getName();
         log.info("Username : {}", name);
 
