@@ -17,4 +17,6 @@ public class UserResponse {
     String fullName;
     String profileLink;
     String email;
+    String avatarUrl;
+    String bio;
 }

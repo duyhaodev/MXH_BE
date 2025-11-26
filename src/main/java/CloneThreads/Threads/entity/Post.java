@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Setter
@@ -26,15 +28,6 @@ public class Post {
     @Column(columnDefinition = "TEXT")
     String content;
 
-    @Column(name = "media_type", length = 20)
-    String mediaType;
-
-    @Column(name = "media_url")
-    String mediaUrl;
-
-    @Column(name = "media_public_id")
-    private String mediaPublicId;
-
     @Column(length = 20)
     String scope;
 
@@ -43,6 +36,14 @@ public class Post {
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
+
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "post",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    List<Media> mediaList = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
@@ -53,5 +54,12 @@ public class Post {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+    }
+    public void addMedia(Media media) {
+        if (mediaList == null) {
+            mediaList = new ArrayList<>();
+        }
+        media.setPost(this); // gán post_id cho media
+        mediaList.add(media);
     }
 }

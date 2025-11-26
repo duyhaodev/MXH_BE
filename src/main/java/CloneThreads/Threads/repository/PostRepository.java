@@ -23,4 +23,7 @@ public interface PostRepository extends JpaRepository<Post, String> {
 		    nativeQuery = true
 		)
 	List<Map<String, Object>> searchPosts(@Param("keyword") String keyword);
+
+    List<Post> findByUserIdOrderByCreatedAtDesc(String userId);
+
 }

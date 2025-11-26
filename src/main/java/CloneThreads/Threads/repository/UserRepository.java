@@ -14,7 +14,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
 
     @Query(
-            value = "SELECT * FROM users WHERE user_name ILIKE CONCAT('%', :keyword, '%') OR full_name ILIKE CONCAT('%', :keyword, '%')",
+            value = "SELECT * FROM users WHERE username ILIKE CONCAT('%', :keyword, '%') OR full_name ILIKE CONCAT('%', :keyword, '%')",
             nativeQuery = true
         )
     List<User> searchUsers(@Param("keyword") String keyword);
