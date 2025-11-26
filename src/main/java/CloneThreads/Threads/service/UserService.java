@@ -38,7 +38,7 @@ public class UserService {
         }
 
         User user = userMapper.toUser(request);
-        user.setProfileLink("/@" + request.getUserName());
+        user.setProfileLink("@" + request.getUserName());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
