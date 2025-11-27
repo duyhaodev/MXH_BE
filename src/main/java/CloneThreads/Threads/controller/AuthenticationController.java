@@ -2,6 +2,7 @@ package CloneThreads.Threads.controller;
 
 import CloneThreads.Threads.dto.request.AuthenticationRequest;
 import CloneThreads.Threads.dto.request.IntrospectRequest;
+import CloneThreads.Threads.dto.request.LogoutRequest;
 import CloneThreads.Threads.dto.response.ApiResponse;
 import CloneThreads.Threads.dto.response.AuthenticationResponse;
 import CloneThreads.Threads.dto.response.IntrospectResponse;
@@ -37,6 +38,13 @@ public class AuthenticationController {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
                 .result(result)
+                .build();
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<Void>builder()
                 .build();
     }
 }

@@ -27,7 +27,7 @@ public class PostController {
     public ResponseEntity<PostResponse> create(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(value = "content", required = false) String content,
-            @RequestParam(value = "image", required = false) MultipartFile image
+            @RequestParam(value = "files", required = false) List<MultipartFile> files
     ) throws IOException {
 
         // Lấy username từ JWT (sub = username)
@@ -35,7 +35,7 @@ public class PostController {
         // Tìm user theo username
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
-        return ResponseEntity.ok(postService.create(user.getId(), content, image));
+        return ResponseEntity.ok(postService.create(user.getId(), content, files));
     }
 
     @GetMapping("/feed")
@@ -45,4 +45,35 @@ public class PostController {
     ) {
         return ResponseEntity.ok(postService.getFeed(page, size));
     }
+
+    // Xem profile của mình
+    @GetMapping("/profile")
+    public ResponseEntity<List<PostResponse>> getMyProfilePosts(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        // Lấy username từ JWT
+        String username = jwt.getSubject();
+        // Tìm user theo username
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        // Lấy bài viết theo userId
+        List<PostResponse> posts = postService.getPostsByUserId(user.getId());
+
+        return ResponseEntity.ok(posts);
+    }
+
+    // Xem profile của người khác
+    @GetMapping("/profile/{username}")
+    public ResponseEntity<List<PostResponse>> getUserProfilePosts(
+            @PathVariable String username
+    ) {
+        List<PostResponse> posts = postService.getPostsByUsername(username);
+        return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/posts/{postId}")
+    public ResponseEntity<PostResponse> getOne(@PathVariable String postId) {
+        return ResponseEntity.ok(postService.getPostById(postId));
+    }
+
 }
