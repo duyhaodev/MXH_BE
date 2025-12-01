@@ -19,8 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +33,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final Cloudinary cloudinary;
+
+    private static final long MAX_MEDIA_SIZE = 20L * 1024 * 1024;
 
     public PostResponse create(String userId, String content, List<MultipartFile> files) throws IOException {
         User user = userRepository.findById(userId)
@@ -42,52 +47,96 @@ public class PostService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (file == null || file.isEmpty()) continue;
+        // Lọc bỏ file null / rỗng
+        List<MultipartFile> validFiles;
+        if (files == null || files.isEmpty()) {
+            validFiles = Collections.emptyList();
+        } else {
+            validFiles = files.stream()
+                    .filter(Objects::nonNull)
+                    .filter(f -> !f.isEmpty())
+                    .collect(Collectors.toList());
+        }
 
-                String contentType = file.getContentType();
-                String folder = "threads/posts/other";
-
-                if (contentType != null) {
-                    if (contentType.startsWith("image/")) {
-                        folder = "threads/posts/image";
-                    } else if (contentType.startsWith("video/")) {
-                        folder = "threads/posts/video";
-                    }
-                }
-
-                // Upload lên Cloudinary
-                Map<String, Object> upload = cloudinary.uploader().upload(
-                        file.getBytes(),
-                        ObjectUtils.asMap(
-                                "folder", folder,
-                                "resource_type", "auto"
-                        )
-                );
-
-                String mediaUrl = (String) upload.get("secure_url");
-                String mediaPublicId = (String) upload.get("public_id");
-                String detectedType = detectMediaType(contentType);
-
-                Media media = Media.builder()
-                        .mediaUrl(mediaUrl)
-                        .mediaPublicId(mediaPublicId)
-                        .mediaType(detectedType)
-                        .build();
-                post.addMedia(media);
+        // validate
+        if (!validFiles.isEmpty()) {
+            for (MultipartFile file : validFiles) {
+                validateMedia(file);
             }
         }
 
+        // UPLOAD SONG SONG LÊN CLOUDINARY
+        if (!validFiles.isEmpty()) {
+            List<CompletableFuture<Media>> futures = validFiles.stream()
+                    .map(file -> CompletableFuture.supplyAsync(() -> uploadSingleMedia(file)))
+                    .collect(Collectors.toList());
+
+            List<Media> mediaList = futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            // Gắn media vào post
+            for (Media media : mediaList) {
+                post.addMedia(media);
+            }
+        }
+        // Lưu post + media vào DB
         Post saved = postRepository.save(post);
         return postMapper.toResponse(saved, user);
     }
 
-    private String detectMediaType(String contentType) {
-        if (contentType == null) return "other";
-        if (contentType.startsWith("image/")) return "image";
-        if (contentType.startsWith("video/")) return "video";
-        return "other";
+    private void validateMedia(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new IllegalArgumentException("Không xác định được loại file upload");
+        }
+        boolean isImage = contentType.startsWith("image/");
+        boolean isVideo = contentType.startsWith("video/");
+
+        if (!isImage && !isVideo) {
+            throw new IllegalArgumentException("Chỉ cho phép upload hình ảnh hoặc video");
+        }
+        if (file.getSize() > MAX_MEDIA_SIZE) {
+            throw new IllegalArgumentException("File quá lớn (tối đa 20MB)");
+        }
+    }
+
+    private Media uploadSingleMedia(MultipartFile file) {
+        try {
+            String contentType = file.getContentType();
+            boolean isImage = contentType != null && contentType.startsWith("image/");
+            boolean isVideo = contentType != null && contentType.startsWith("video/");
+
+            String folder = isImage
+                    ? "threads/posts/image"
+                    : "threads/posts/video";
+
+            // Upload lên Cloudinary
+            Map<String, Object> upload = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "resource_type", "auto"
+                    )
+            );
+
+            String mediaUrl = (String) upload.get("secure_url");
+            String mediaPublicId = (String) upload.get("public_id");
+            String detectedType = isImage ? "image" : "video";
+
+            return Media.builder()
+                    .mediaUrl(mediaUrl)
+                    .mediaPublicId(mediaPublicId)
+                    .mediaType(detectedType)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Upload media failed: " + e.getMessage(), e);
+        }
     }
 
     public List<PostResponse> getFeed(int page, int size) {
@@ -101,6 +150,7 @@ public class PostService {
                 })
                 .collect(Collectors.toList());
     }
+
     public List<PostResponse> getPostsByUserId(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -111,12 +161,14 @@ public class PostService {
                 .map(post -> postMapper.toResponse(post, user))
                 .collect(Collectors.toList());
     }
+
     public List<PostResponse> getPostsByUsername(String username) {
         // Tìm user theo username
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
         return getPostsByUserId(user.getId());
     }
+
     public PostResponse getPostById(String postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -125,6 +177,4 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return postMapper.toResponse(post, user);
     }
-
-
 }
