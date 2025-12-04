@@ -18,7 +18,9 @@ public enum ErrorCode {
     USER_NOT_FOUND(1010, "User not found", HttpStatus.NOT_FOUND),
     TOKEN_INVALID(1011, "Invalid token", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
-    ;
+    CANNOT_FOLLOW_SELF(1012, "CANNOT_FOLLOW_SELF", HttpStatus.BAD_REQUEST),
+    ALREADY_FOLLOWING(1013, "ALREADY_FOLLOWING", HttpStatus.CONFLICT),
+    NOT_FOLLOWING(1014, "NOT_FOLLOWING", HttpStatus.NOT_FOUND);
 
     ErrorCode(int code, String message, HttpStatusCode httpStatusCode) {
         this.code = code;

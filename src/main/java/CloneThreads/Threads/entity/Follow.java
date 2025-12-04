@@ -17,15 +17,25 @@ import java.util.UUID;
 @Table(name = "follows")
 public class Follow {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
     @Column(name = "follower_id", nullable = false)
-    UUID followerId;
+    String followerId;
 
     @Column(name = "following_id", nullable = false)
-    UUID followingId;
+    String followingId;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

@@ -15,6 +15,7 @@ public interface PostRepository extends JpaRepository<Post, String> {
 //	        nativeQuery = true
 //	    )
 //    List<Post> searchPosts(@Param("keyword") String keyword);
+<<<<<<< Updated upstream
 	@Query(
 			value = "SELECT p.id, p.user_id AS \"userId\", p.content, " +
 					"p.media_type AS \"mediaType\", p.media_url AS \"mediaUrl\", p.media_public_id AS \"mediaPublicId\", " +
@@ -26,6 +27,46 @@ public interface PostRepository extends JpaRepository<Post, String> {
 			nativeQuery = true
 	)
 	List<Map<String, Object>> searchPosts(@Param("keyword") String keyword);
+=======
+@Query(
+        value = """
+                SELECT 
+                    p.id,
+                    p.user_id AS "userId",
+                    p.content,
+                    p.scope,
+                    p.created_at AS "createdAt",
+                    p.updated_at AS "updatedAt",
+
+                    u.full_name AS "fullName",
+                    u.user_name AS "username",
+                    u.avatar_url AS "avatarUrl",
+
+                    (
+                        COALESCE(
+                            json_agg(
+                                json_build_object(
+                                    'id', m.id,
+                                    'mediaUrl', m.media_url,
+                                    'mediaPublicId', m.media_public_id,
+                                    'mediaType', m.media_type
+                                )
+                            ) FILTER (WHERE m.id IS NOT NULL),
+                            '[]'::json
+                        )
+                    )::json AS "mediaList"
+
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN media m ON m.post_id = p.id
+                WHERE p.content ILIKE CONCAT('%', :keyword, '%')
+                GROUP BY p.id, u.full_name, u.user_name, u.avatar_url
+                ORDER BY p.created_at DESC
+                """,
+        nativeQuery = true
+)
+List<Map<String, Object>> searchPosts(@Param("keyword") String keyword);
+>>>>>>> Stashed changes
 
     List<Post> findByUserIdOrderByCreatedAtDesc(String userId);
 

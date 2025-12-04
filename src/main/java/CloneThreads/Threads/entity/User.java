@@ -46,6 +46,12 @@ public class User {
     @Column(name = "created_at")
     LocalDateTime createdAt;
 
+    @Column(name = "followers_count", nullable = false)
+    int followersCount = 0;
+
+    @Column(name = "following_count", nullable = false)
+    int followingCount = 0;
+
     @PrePersist
     public void prePersist() {
         // tự sinh id kiểu chuỗi UUID

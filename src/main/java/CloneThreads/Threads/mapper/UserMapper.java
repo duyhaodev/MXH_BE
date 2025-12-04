@@ -10,5 +10,7 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
     User toUser(UserCreationRequest request);
 
+    @Mapping(source = "followersCount", target = "followersCount")
+    @Mapping(source = "followingCount", target = "followingCount")
     UserResponse toUserResponse(User user);
 }

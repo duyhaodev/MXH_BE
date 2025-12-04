@@ -7,6 +7,7 @@ import CloneThreads.Threads.exception.AppException;
 import CloneThreads.Threads.exception.ErrorCode;
 import CloneThreads.Threads.mapper.UserMapper;
 import CloneThreads.Threads.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -68,6 +69,12 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    public String getUserIdByUsername(String username) {
+        return userRepository.findByUserName(username)
+                .map(User::getId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
     public UserResponse editProfile(String username, String fullName, String bio, MultipartFile avatar) throws IOException {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -91,7 +98,42 @@ public class UserService {
         return userMapper.toUserResponse(saved);
     }
 
+    // Tăng followers cho user (khi ai đó follow họ)
+    @Transactional
+    public void incrementFollowers(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setFollowersCount(user.getFollowersCount() + 1);
+        userRepository.save(user);
+    }
 
+    // Giảm followers cho user (khi unfollow)
+    @Transactional
+    public void decrementFollowers(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        int newCount = Math.max(0, user.getFollowersCount() - 1);  // Không âm
+        user.setFollowersCount(newCount);
+        userRepository.save(user);
+    }
 
+    // Tăng following cho user (khi họ follow ai đó)
+    @Transactional
+    public void incrementFollowing(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setFollowingCount(user.getFollowingCount() + 1);
+        userRepository.save(user);
+    }
+
+    // Giảm following cho user (khi họ unfollow)
+    @Transactional
+    public void decrementFollowing(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        int newCount = Math.max(0, user.getFollowingCount() - 1);  // Không âm
+        user.setFollowingCount(newCount);
+        userRepository.save(user);
+    }
 
 }
