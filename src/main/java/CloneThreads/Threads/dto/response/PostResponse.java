@@ -23,4 +23,6 @@ public class PostResponse {
     private String username;
     private String fullName;
     private String avatarUrl;
+
+    private Long commentCount;
 }

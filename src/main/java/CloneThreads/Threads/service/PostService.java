@@ -5,6 +5,7 @@ import CloneThreads.Threads.entity.Media;
 import CloneThreads.Threads.entity.Post;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.mapper.PostMapper;
+import CloneThreads.Threads.repository.CommentRepository;
 import CloneThreads.Threads.repository.PostRepository;
 import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
@@ -33,6 +34,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final Cloudinary cloudinary;
+    private final CommentRepository commentRepository;
 
     private static final long MAX_MEDIA_SIZE = 20L * 1024 * 1024;
 
@@ -81,9 +83,16 @@ public class PostService {
                 post.addMedia(media);
             }
         }
+
         // Lưu post + media vào DB
         Post saved = postRepository.save(post);
-        return postMapper.toResponse(saved, user);
+
+        // 👇 ĐẾM COMMENT CHO POST VỪA TẠO
+        long commentCount = commentRepository.countByPostId(saved.getId());
+
+        PostResponse res = postMapper.toResponse(saved, user);
+        res.setCommentCount(commentCount);
+        return res;
     }
 
     private void validateMedia(MultipartFile file) {
@@ -146,7 +155,13 @@ public class PostService {
         return postPage.stream()
                 .map(post -> {
                     User user = userRepository.findById(post.getUserId()).orElse(null);
-                    return postMapper.toResponse(post, user);
+
+                    // 👇 ĐẾM COMMENT CHO TỪNG POST
+                    long commentCount = commentRepository.countByPostId(post.getId());
+
+                    PostResponse res = postMapper.toResponse(post, user);
+                    res.setCommentCount(commentCount);
+                    return res;
                 })
                 .collect(Collectors.toList());
     }
@@ -158,7 +173,12 @@ public class PostService {
         List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
         return posts.stream()
-                .map(post -> postMapper.toResponse(post, user))
+                .map(post -> {
+                    long commentCount = commentRepository.countByPostId(post.getId());
+                    PostResponse res = postMapper.toResponse(post, user);
+                    res.setCommentCount(commentCount);
+                    return res;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -166,7 +186,17 @@ public class PostService {
         // Tìm user theo username
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
-        return getPostsByUserId(user.getId());
+
+        List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+
+        return posts.stream()
+                .map(post -> {
+                    long commentCount = commentRepository.countByPostId(post.getId());
+                    PostResponse res = postMapper.toResponse(post, user);
+                    res.setCommentCount(commentCount);
+                    return res;
+                })
+                .collect(Collectors.toList());
     }
 
     public PostResponse getPostById(String postId) {
@@ -175,6 +205,11 @@ public class PostService {
 
         User user = userRepository.findById(post.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return postMapper.toResponse(post, user);
+
+        long commentCount = commentRepository.countByPostId(post.getId());
+
+        PostResponse res = postMapper.toResponse(post, user);
+        res.setCommentCount(commentCount);
+        return res;
     }
 }
