@@ -25,4 +25,6 @@ public class PostResponse {
     private String avatarUrl;
 
     private Long commentCount;
+    private Long likeCount;
+    private Boolean likedByCurrentUser; // user hiện tại đã like chưa
 }

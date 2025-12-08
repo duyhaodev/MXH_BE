@@ -6,6 +6,7 @@ import CloneThreads.Threads.entity.Post;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.mapper.PostMapper;
 import CloneThreads.Threads.repository.CommentRepository;
+import CloneThreads.Threads.repository.LikeRepository;
 import CloneThreads.Threads.repository.PostRepository;
 import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
@@ -35,6 +36,8 @@ public class PostService {
     private final PostMapper postMapper;
     private final Cloudinary cloudinary;
     private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
+
 
     private static final long MAX_MEDIA_SIZE = 20L * 1024 * 1024;
 
@@ -59,14 +62,12 @@ public class PostService {
                     .filter(f -> !f.isEmpty())
                     .collect(Collectors.toList());
         }
-
         // validate
         if (!validFiles.isEmpty()) {
             for (MultipartFile file : validFiles) {
                 validateMedia(file);
             }
         }
-
         // UPLOAD SONG SONG LÊN CLOUDINARY
         if (!validFiles.isEmpty()) {
             List<CompletableFuture<Media>> futures = validFiles.stream()
@@ -77,19 +78,14 @@ public class PostService {
                     .map(CompletableFuture::join)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-
             // Gắn media vào post
             for (Media media : mediaList) {
                 post.addMedia(media);
             }
         }
-
         // Lưu post + media vào DB
         Post saved = postRepository.save(post);
-
-        // 👇 ĐẾM COMMENT CHO POST VỪA TẠO
         long commentCount = commentRepository.countByPostId(saved.getId());
-
         PostResponse res = postMapper.toResponse(saved, user);
         res.setCommentCount(commentCount);
         return res;
@@ -148,25 +144,33 @@ public class PostService {
         }
     }
 
-    public List<PostResponse> getFeed(int page, int size) {
+    public List<PostResponse> getFeed(String currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Post> postPage = postRepository.findAll(pageable);
 
         return postPage.stream()
                 .map(post -> {
-                    User user = userRepository.findById(post.getUserId()).orElse(null);
+                    User user = userRepository.findById(post.getUserId())
+                            .orElse(null);
 
-                    // 👇 ĐẾM COMMENT CHO TỪNG POST
                     long commentCount = commentRepository.countByPostId(post.getId());
+                    long likeCount = likeRepository.countByPostId(post.getId());
+                    boolean likedByCurrentUser = false;
+                    if (currentUserId != null) {
+                        likedByCurrentUser = likeRepository
+                                .existsByUserIdAndPostId(currentUserId, post.getId());
+                    }
 
                     PostResponse res = postMapper.toResponse(post, user);
                     res.setCommentCount(commentCount);
+                    res.setLikeCount(likeCount);
+                    res.setLikedByCurrentUser(likedByCurrentUser);
                     return res;
                 })
                 .collect(Collectors.toList());
     }
 
-    public List<PostResponse> getPostsByUserId(String userId) {
+    public List<PostResponse> getPostsByUserId(String userId, String currentUserId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -175,15 +179,24 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     long commentCount = commentRepository.countByPostId(post.getId());
+                    long likeCount = likeRepository.countByPostId(post.getId());
+                    boolean likedByCurrentUser = false;
+                    if (currentUserId != null) {
+                        likedByCurrentUser = likeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
+                    }
+
                     PostResponse res = postMapper.toResponse(post, user);
                     res.setCommentCount(commentCount);
+                    res.setLikeCount(likeCount);
+                    res.setLikedByCurrentUser(likedByCurrentUser);
                     return res;
                 })
                 .collect(Collectors.toList());
     }
 
-    public List<PostResponse> getPostsByUsername(String username) {
-        // Tìm user theo username
+
+    public List<PostResponse> getPostsByUsername(String username, String currentUserId) {
+        // Tìm owner của profile theo username
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
@@ -192,14 +205,24 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     long commentCount = commentRepository.countByPostId(post.getId());
+                    long likeCount = likeRepository.countByPostId(post.getId());
+
+                    boolean likedByCurrentUser = false;
+                    if (currentUserId != null) {
+                        likedByCurrentUser = likeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
+                    }
+
                     PostResponse res = postMapper.toResponse(post, user);
                     res.setCommentCount(commentCount);
+                    res.setLikeCount(likeCount);
+                    res.setLikedByCurrentUser(likedByCurrentUser);
                     return res;
                 })
                 .collect(Collectors.toList());
     }
 
-    public PostResponse getPostById(String postId) {
+
+    public PostResponse getPostById(String postId, String currentUserId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -207,9 +230,18 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         long commentCount = commentRepository.countByPostId(post.getId());
+        long likeCount = likeRepository.countByPostId(post.getId());
+
+        boolean likedByCurrentUser = false;
+        if (currentUserId != null) {
+            likedByCurrentUser = likeRepository
+                    .existsByUserIdAndPostId(currentUserId, post.getId());
+        }
 
         PostResponse res = postMapper.toResponse(post, user);
         res.setCommentCount(commentCount);
+        res.setLikeCount(likeCount);
+        res.setLikedByCurrentUser(likedByCurrentUser);
         return res;
     }
 }
