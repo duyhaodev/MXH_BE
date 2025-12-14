@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class FollowService {
     @Autowired private FollowRepository followRepo;
     @Autowired private UserService userService;
+    @Autowired private NotificationService notificationService;
 
     @Transactional
     public FollowResponse followUser(String followerId, String followingId) {
@@ -32,9 +33,12 @@ public class FollowService {
                 .build();
         followRepo.save(follow);
 
+        // Create notification for the followed user
+        notificationService.createFollowNotification(followingId, followerId);
+
         // Update counts
-        userService.incrementFollowers(followingId);  // +1 followers cho following user
-        userService.incrementFollowing(followerId);    // +1 following cho follower user
+        userService.incrementFollowers(followingId);
+        userService.incrementFollowing(followerId);
 
         return FollowResponse.builder()
                 .success(true)
@@ -51,9 +55,9 @@ public class FollowService {
 
         followRepo.deleteByFollowerIdAndFollowingId(followerId, followingId);
 
-        // Update counts
-        userService.decrementFollowers(followingId);  // -1 followers
-        userService.decrementFollowing(followerId);   // -1 following
+        // Update counts (no notification for unfollow)
+        userService.decrementFollowers(followingId);
+        userService.decrementFollowing(followerId);
 
         return FollowResponse.builder()
                 .success(true)
