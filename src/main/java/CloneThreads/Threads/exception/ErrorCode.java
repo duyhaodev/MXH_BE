@@ -17,6 +17,7 @@ public enum ErrorCode {
     EMAIL_NOT_BLANK(1009, "Email must not be blank", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(1010, "User not found", HttpStatus.NOT_FOUND),
     TOKEN_INVALID(1011, "Invalid token", HttpStatus.BAD_REQUEST),
+    CONVERSATION_NOT_FOUND(1012, "Conversation not found", HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
     ;
 

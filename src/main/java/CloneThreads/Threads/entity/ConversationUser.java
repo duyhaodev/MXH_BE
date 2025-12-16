@@ -18,17 +18,39 @@ import java.util.UUID;
 public class ConversationUser {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
     @Column(name = "conversation_id", nullable = false)
-    UUID conversationId;
+    String conversationId;
 
     @Column(name = "user_id", nullable = false)
-    UUID userId;
+    String userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id", insertable = false, updatable = false)
+    Conversation conversation;
 
     @Column(name = "is_admin")
     Boolean isAdmin;
 
+    @Column(name = "unread")
+    @Builder.Default
+    Boolean unread = false;
+
     @Column(name = "created_at")
     LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

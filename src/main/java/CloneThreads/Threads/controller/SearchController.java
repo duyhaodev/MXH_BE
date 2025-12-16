@@ -1,10 +1,12 @@
 package CloneThreads.Threads.controller;
 
 import CloneThreads.Threads.dto.response.ApiResponse;
+import CloneThreads.Threads.dto.response.UserResponse;
 import CloneThreads.Threads.entity.Post;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.repository.PostRepository;
 import CloneThreads.Threads.repository.UserRepository;
+import CloneThreads.Threads.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +14,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/search")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class SearchController {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final UserService userService;
 
-    @GetMapping
+    @GetMapping("/search")
     public ResponseEntity<ApiResponse> search(@RequestParam("keyword") String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(
@@ -44,5 +47,12 @@ public class SearchController {
                         .result(results)
                         .build()
         );
+    }
+
+    @GetMapping("/users")
+    public ApiResponse<List<UserResponse>> searchUser (@RequestParam("keyword") String keyword) {
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(userService.searchUser(keyword))
+                .build();
     }
 }

@@ -5,35 +5,31 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-@Setter
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "conversations")
-public class Conversation {
+@Table(name = "web_socket_sessions")
+public class WebSocketSession {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    @Column(length = 20)
-    String type;
+    @Column(name = "socket_session_id", nullable = false, unique = true)
+    String socketSessionId;
 
-    @Column(name = "participants_hash", unique = true)
-    String participantsHash;
+    @Column(name = "user_id", nullable = false)
+    String userId;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-        }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }

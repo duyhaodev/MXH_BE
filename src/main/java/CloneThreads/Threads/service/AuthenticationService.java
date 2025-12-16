@@ -56,17 +56,19 @@ public class AuthenticationService {
 
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
-
         boolean isValid = true;
+        String userId = null;
 
         try {
-            verifyToken(token, false);
+            var signedJWT = verifyToken(token, false);
+            userId = signedJWT.getJWTClaimsSet().getSubject();
         } catch (AppException e) {
             isValid = false;
         }
 
         return IntrospectResponse.builder()
                 .valid(isValid)
+                .userId(userId)
                 .build();
     }
 

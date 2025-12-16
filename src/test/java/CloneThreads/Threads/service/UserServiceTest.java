@@ -1,0 +1,93 @@
+package CloneThreads.Threads.service;
+
+import CloneThreads.Threads.dto.response.UserResponse;
+import CloneThreads.Threads.entity.User;
+import CloneThreads.Threads.mapper.UserMapper;
+import CloneThreads.Threads.repository.UserRepository;
+import com.cloudinary.Cloudinary;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private Cloudinary cloudinary;
+
+    @InjectMocks
+    private UserService userService;
+
+    @BeforeEach
+    void setUp() {
+        // No special setup needed yet
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void searchUser_excludeSelf() {
+        // Arrange
+        String currentUsername = "currentUser";
+        String otherUsername = "otherUser";
+        String keyword = "User";
+
+        User currentUser = User.builder().userName(currentUsername).fullName("Current User").build();
+        User otherUser = User.builder().userName(otherUsername).fullName("Other User").build();
+
+        UserResponse otherUserResponse = UserResponse.builder().userName(otherUsername).build();
+
+        // Mock Security Context
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(currentUsername);
+        SecurityContextHolder.setContext(securityContext);
+
+        // Mock Repository
+        when(userRepository.searchUsers(keyword)).thenReturn(List.of(currentUser, otherUser));
+
+        // Mock Mapper
+        when(userMapper.toUserResponse(otherUser)).thenReturn(otherUserResponse);
+        // We don't expect toUserResponse to be called for currentUser, so we don't mock it specifically 
+        // or we mock it generally if strict stubbing is off. 
+        // With strict stubbing (default in MockitoExtension), unused stubs might throw errors, 
+        // but here we are testing that it is NOT called.
+
+        // Act
+        List<UserResponse> results = userService.searchUser(keyword);
+
+        // Assert
+        assertEquals(1, results.size());
+        assertEquals(otherUsername, results.get(0).getUserName());
+        verify(userMapper, times(1)).toUserResponse(any(User.class));
+        verify(userMapper).toUserResponse(otherUser);
+        verify(userMapper, never()).toUserResponse(currentUser);
+    }
+}

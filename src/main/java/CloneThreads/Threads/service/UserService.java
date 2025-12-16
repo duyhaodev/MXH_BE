@@ -11,7 +11,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -91,7 +91,15 @@ public class UserService {
         return userMapper.toUserResponse(saved);
     }
 
+    public List<UserResponse> searchUser (String keyword){
+        var context = SecurityContextHolder.getContext();
+        String currentUsername = context.getAuthentication().getName();
 
+        List<User> user = userRepository.searchUsers(keyword);
 
-
+        return user.stream()
+                .filter(u -> !u.getUserName().equals(currentUsername))
+                .map(userMapper::toUserResponse)
+                .toList();
+    }
 }

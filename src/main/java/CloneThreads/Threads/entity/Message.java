@@ -18,20 +18,28 @@ import java.util.UUID;
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    String id;
 
     @Column(name = "conversation_id", nullable = false)
-    UUID conversationId;
+    String conversationId;
 
-    @Column(name = "user_id", nullable = false)
-    UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    User user;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     String content;
 
-    @Column(name = "is_read")
-    Boolean isRead;
-
     @Column(name = "created_at")
     LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
