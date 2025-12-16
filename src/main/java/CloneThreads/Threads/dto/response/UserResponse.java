@@ -19,4 +19,6 @@ public class UserResponse {
     String email;
     String avatarUrl;
     String bio;
+    int followersCount;
+    int followingCount;
 }

@@ -18,6 +18,11 @@ public enum ErrorCode {
     USER_NOT_FOUND(1010, "User not found", HttpStatus.NOT_FOUND),
     TOKEN_INVALID(1011, "Invalid token", HttpStatus.BAD_REQUEST),
     CONVERSATION_NOT_FOUND(1012, "Conversation not found", HttpStatus.NOT_FOUND),
+    CANNOT_FOLLOW_SELF(1013, "CANNOT_FOLLOW_SELF", HttpStatus.BAD_REQUEST),
+    ALREADY_FOLLOWING(1014, "ALREADY_FOLLOWING", HttpStatus.CONFLICT),
+    NOT_FOLLOWING(1015, "NOT_FOLLOWING", HttpStatus.NOT_FOUND),
+    INVALID_NOTIFICATION(1016,"Invalid notification", HttpStatus.BAD_REQUEST),
+    NOTIFICATION_NOT_FOUND(1017,"Notification not found", HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
     ;
 
