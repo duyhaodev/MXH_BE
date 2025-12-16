@@ -37,6 +37,10 @@ public class Post {
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "repost_of_id")
+    Post repostOf;
+
     @Builder.Default
     @OneToMany(
             mappedBy = "post",

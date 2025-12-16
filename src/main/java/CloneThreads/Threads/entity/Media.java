@@ -30,8 +30,12 @@ public class Media {
     String mediaType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id")
     Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    Comment comment;
 
     @PrePersist
     public void prePersist() {

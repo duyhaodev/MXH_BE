@@ -23,4 +23,16 @@ public class PostResponse {
     private String username;
     private String fullName;
     private String avatarUrl;
+
+    private Long commentCount;
+    private Long likeCount;
+    private Boolean likedByCurrentUser; // user hiện tại đã like chưa
+    private Boolean repostedByCurrentUser; // user hiện tại đã repost chưa
+    private Long repostCount;
+
+    private String repostOfId;
+    private String originalUserId;
+    private String originalUsername;
+    private String originalFullName;
+    private String originalAvatarUrl;
 }
