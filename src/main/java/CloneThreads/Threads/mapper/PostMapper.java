@@ -17,6 +17,7 @@ public interface PostMapper {
     @Mapping(target = "createdAt", source = "post.createdAt")
     @Mapping(target = "updatedAt", source = "post.updatedAt")
     @Mapping(target = "mediaList", source = "post.mediaList")
+    @Mapping(target = "repostOfId", source = "post.repostOf.id")
 
     // user
     @Mapping(target = "userId", source = "post.userId")

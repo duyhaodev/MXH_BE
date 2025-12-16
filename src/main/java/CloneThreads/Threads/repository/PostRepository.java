@@ -27,6 +27,10 @@ public interface PostRepository extends JpaRepository<Post, String> {
     )
 	List<Map<String, Object>> searchPosts(@Param("keyword") String keyword);
 
-    List<Post> findByUserIdOrderByCreatedAtDesc(String userId);
-
+    long countByRepostOf_Id(String originalPostId);
+    List<Post> findByUserIdAndRepostOfIsNotNullOrderByCreatedAtDesc(String userId);  //Lấy các bài repost
+    List<Post> findByUserIdAndRepostOfIsNullOrderByCreatedAtDesc(String userId);
+    boolean existsByUserIdAndRepostOf_Id(String userId, String repostOfId);
+    java.util.Optional<Post> findByUserIdAndRepostOf_Id(String userId, String repostOfId);
+    void deleteByRepostOf_Id(String originalPostId);
 }

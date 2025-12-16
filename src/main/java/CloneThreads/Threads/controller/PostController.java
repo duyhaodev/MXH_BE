@@ -22,7 +22,6 @@ public class PostController {
     private final PostService postService;
     private final UserRepository userRepository;
 
-    // NHẬN multipart/form-data: content (text) + image (file)
     @PostMapping(path = "/posts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> create(
             @AuthenticationPrincipal Jwt jwt,
@@ -36,6 +35,20 @@ public class PostController {
 
         return ResponseEntity.ok(postService.create(user.getId(), content, files));
     }
+
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable String postId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String username = jwt.getSubject();
+        User currentUser = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        postService.deletePost(currentUser.getId(), postId);
+        return ResponseEntity.noContent().build();
+    }
+
 
     @GetMapping("/feed")
     public ResponseEntity<List<PostResponse>> feed(
@@ -63,6 +76,20 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
+    // Xem profile của mình - Tab Reposts
+    @GetMapping("/profile/reposts")
+    public ResponseEntity<List<PostResponse>> getMyReposts(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String username = jwt.getSubject();
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        // ownerId = viewerId = chính mình
+        List<PostResponse> posts = postService.getRepostsByUserId(user.getId(), user.getId());
+        return ResponseEntity.ok(posts);
+    }
+
     // Xem profile của người khác
     @GetMapping("/profile/{username}")
     public ResponseEntity<List<PostResponse>> getUserProfilePosts(
@@ -77,6 +104,21 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
+    // Xem profile của người khác - TabReposts
+    @GetMapping("/profile/{username}/reposts")
+    public ResponseEntity<List<PostResponse>> getUserReposts(
+            @PathVariable String username,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String currentUsername = jwt.getSubject();
+        User currentUser = userRepository.findByUserName(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUsername));
+
+        List<PostResponse> posts = postService.getRepostsByUsername(username, currentUser.getId());
+        return ResponseEntity.ok(posts);
+    }
+
+    // Xem chi tiết 1 bài post
     @GetMapping("/posts/{postId}")
     public ResponseEntity<PostResponse> getOne(
             @PathVariable String postId,
@@ -88,4 +130,32 @@ public class PostController {
 
         return ResponseEntity.ok(postService.getPostById(postId, currentUser.getId()));
     }
+
+    // Repost bài viết
+    @PostMapping("/posts/{postId}/repost")
+    public ResponseEntity<PostResponse> repost(
+            @PathVariable String postId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String currentUsername = jwt.getSubject();
+        User currentUser = userRepository.findByUserName(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUsername));
+
+        PostResponse repost = postService.repost(currentUser.getId(), postId);
+        return ResponseEntity.ok(repost);
+    }
+
+    @DeleteMapping("/posts/{postId}/repost")
+    public ResponseEntity<java.util.Map<String, String>> unrepost(
+            @PathVariable String postId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String currentUsername = jwt.getSubject();
+        User currentUser = userRepository.findByUserName(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentUsername));
+
+        String repostId = postService.unrepost(currentUser.getId(), postId);
+        return ResponseEntity.ok(java.util.Map.of("repostId", repostId));
+    }
+
 }
