@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,14 +28,188 @@ public class NotificationService {
         // Fetch fromUser displayName for message
         String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
 
-        Notification notification = Notification.builder()
-                .userId(toUserId)
-                .fromUserId(fromUserId)
-                .type("follow")
-                .message(fromUserDisplayName + " followed you")
-                .isRead(false)
-                .build();
-        return notificationRepo.save(notification);
+        // Check if notification already exists
+        Optional<Notification> existingNotification = notificationRepo.findExistFollowNotification(toUserId, fromUserId, "follow");
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            // Update the date
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("follow")
+                    .message(fromUserDisplayName + " followed you")
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public Notification createLikePostNotification(String toUserId, String fromUserId, String postId) {
+        if (toUserId.equals(fromUserId)) {
+            return null;  // Không tạo noti nếu self-like
+        }
+
+        // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+
+        // Check if notification already exists
+        Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "like_post", postId);
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            // Update the date
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("like_post")
+                    .message(fromUserDisplayName + " liked your post")
+                    .postId(postId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public Notification createLikeCommentNotification(String toUserId, String fromUserId, String commentId) {
+        if (toUserId.equals(fromUserId)) {
+            return null;  // Không tạo noti nếu self-like
+        }
+
+        // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+
+        // Check if notification already exists
+        Optional<Notification> existingNotification = notificationRepo.findExistForCommentNotification(toUserId, fromUserId, "like_comment", commentId);
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            // Update the date
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("like_comment")
+                    .message(fromUserDisplayName + " liked your comment")
+                    .commentId(commentId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public Notification createCommentOnPostNotification(String toUserId, String fromUserId, String commentId, String postId) {
+        if (toUserId.equals(fromUserId)) {
+            return null;  // Không tạo noti nếu self-comment
+        }
+
+        // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+
+        // Check if notification already exists
+        Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "comment_post", postId);
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("comment_post")
+                    .message(fromUserDisplayName + " commented on your post")
+                    .commentId(commentId)  // Link to comment
+                    .postId(postId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public Notification createReplyNotification(String toUserId, String fromUserId, String commentId, String parentCommentId) {
+        if (toUserId.equals(fromUserId)) {
+            return null;  // Không tạo noti nếu self-reply
+        }
+
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+
+        // Check if notification already exists
+        Optional<Notification> existingNotification = notificationRepo.findExistForCommentNotification(toUserId, fromUserId, "reply_comment", parentCommentId);
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("reply_comment")
+                    .message(fromUserDisplayName + " replied to your comment")
+                    .commentId(commentId)  // Link to reply comment
+                    .postId(null)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public Notification createRepostNotification(String toUserId, String fromUserId, String postId) {
+        if (toUserId.equals(fromUserId)) {
+            return null;  // Không tạo noti nếu self-repost
+        }
+
+        // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+
+        // Check if notification already exists (với postId trùng)
+        Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "repost_post", postId);
+
+        if (existingNotification.isPresent()) {
+            Notification notification = existingNotification.get();
+            // Update the date
+            notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            return notificationRepo.save(notification);
+        } else {
+            Notification notification = Notification.builder()
+                    .userId(toUserId)
+                    .fromUserId(fromUserId)
+                    .type("repost")
+                    .message(fromUserDisplayName + " reposted your post")
+                    .postId(postId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now().withNano(0))
+                    .build();
+            return notificationRepo.save(notification);
+        }
+    }
+
+    @Transactional
+    public void deleteRepostNotification(String toUserId, String fromUserId, String postId) {
+        Optional<Notification> notificationOpt = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "repost", postId);
+        if (notificationOpt.isPresent()) {
+            Notification notification = notificationOpt.get();
+            notificationRepo.delete(notification);
+        }
     }
 
     public List<Notification> findByUserIdOrderByCreatedAtDesc(String userId) {

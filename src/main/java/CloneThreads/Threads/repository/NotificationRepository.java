@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, String> {
@@ -15,6 +16,15 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
 
     @Query("SELECT COUNT(n) > 0 FROM Notification n WHERE n.id = :notificationId AND n.userId = :userId")
     boolean existsByIdAndUserId(@Param("notificationId") String notificationId, @Param("userId") String userId);
+
+    @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.fromUserId = :fromUserId AND n.type = :type")
+    Optional<Notification> findExistFollowNotification(@Param("userId") String userId, @Param("fromUserId") String fromUserId, @Param("type") String type);
+
+    @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.fromUserId = :fromUserId AND n.type = :type AND n.postId = :postId")
+    Optional<Notification> findExistForPostNotification(@Param("userId") String userId, @Param("fromUserId") String fromUserId, @Param("type") String type, @Param("postId") String postId);
+
+    @Query("SELECT n FROM Notification n WHERE n.userId = :userId AND n.fromUserId = :fromUserId AND n.type = :type AND n.commentId = :commentId")
+    Optional<Notification> findExistForCommentNotification(@Param("userId") String userId, @Param("fromUserId") String fromUserId, @Param("type") String type, @Param("commentId") String commentId);
 
     long countByUserIdAndIsReadFalse(String userId);
 }

@@ -13,6 +13,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,8 @@ public class CommentService {
     private final PostRepository postRepository;
     private final CommentMapper commentMapper;
     private final Cloudinary cloudinary;
+    @Autowired
+    private NotificationService notificationService;
 
     private static final long MAX_MEDIA_SIZE = 20L * 1024 * 1024; // 20MB
     public CommentResponse create(String postId, String userId, String content, String parentId, List<MultipartFile> files) {
@@ -82,6 +85,10 @@ public class CommentService {
             }
         }
         comment = commentRepository.save(comment);
+        // Tạo notification cho post owner (nếu không phải self-comment)
+        if (!post.getUserId().equals(userId)) {
+            notificationService.createCommentOnPostNotification(post.getUserId(), userId, comment.getId(), post.getId());
+        }
         return commentMapper.toResponse(comment, user);
     }
 
