@@ -20,5 +20,8 @@ public class CommentResponse {
     private String fullName;
     private String avatarUrl;
 
+    private long likeCount;
+    private boolean likedByCurrentUser;
+
     private List<MediaResponse> mediaList;
 }

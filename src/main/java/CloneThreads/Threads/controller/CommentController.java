@@ -26,9 +26,17 @@ public class CommentController {
     public List<CommentResponse> listComments(
             @PathVariable String postId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return commentService.getCommentsByPost(postId, page, size);
+        String currentUserId = null;
+        if (jwt != null) {
+            String username = jwt.getSubject();
+            User user = userRepository.findByUserName(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+            currentUserId = user.getId();
+        }
+        return commentService.getCommentsByPost(postId, currentUserId, page, size);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
