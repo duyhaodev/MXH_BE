@@ -12,6 +12,7 @@ import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +39,8 @@ public class PostService {
     private final Cloudinary cloudinary;
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
-
+    @Autowired
+    private NotificationService notificationService;
 
     private static final long MAX_MEDIA_SIZE = 20L * 1024 * 1024;
 
@@ -384,6 +386,11 @@ public class PostService {
         res.setOriginalFullName(originalUser.getFullName());
         res.setOriginalAvatarUrl(originalUser.getAvatarUrl());
 
+        // Tạo notification cho original post owner (nếu không phải self-repost)
+        if (!original.getUserId().equals(currentUserId)) {
+            notificationService.createRepostNotification(original.getUserId(), currentUserId, originalPostId);
+        }
+
         return res;
     }
 
@@ -391,8 +398,16 @@ public class PostService {
         Post repost = postRepository.findByUserIdAndRepostOf_Id(currentUserId, originalPostId)
                 .orElseThrow(() -> new RuntimeException("Bạn chưa repost bài này"));
 
+        Post original = postRepository.findById(originalPostId)
+                .orElseThrow(() -> new RuntimeException("Original post not found"));
+
         String repostId = repost.getId();
         postRepository.delete(repost);
+        // Xóa notification tương ứng (nếu tồn tại và không phải self-repost)
+        if (!original.getUserId().equals(currentUserId)) {
+            notificationService.deleteRepostNotification(original.getUserId(), currentUserId, originalPostId);
+        }
+
         return repostId;
     }
 

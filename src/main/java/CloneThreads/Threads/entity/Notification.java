@@ -41,7 +41,7 @@ public class Notification {
     Boolean isRead = false;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @PrePersist

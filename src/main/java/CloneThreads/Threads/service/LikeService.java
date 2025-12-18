@@ -9,6 +9,7 @@ import CloneThreads.Threads.repository.LikeRepository;
 import CloneThreads.Threads.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -21,6 +22,8 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional
     public LikeResponse togglePostLike(String postId, String userId) {
@@ -38,6 +41,11 @@ public class LikeService {
                     .createdAt(LocalDateTime.now())
                     .build();
             likeRepository.save(like);
+
+            // Tạo notification (nếu không phải self-like)
+            if (!post.getUserId().equals(userId)) {
+                notificationService.createLikePostNotification(post.getUserId(), userId, post.getId());
+            }
         }
 
         long count = likeRepository.countByPostId(post.getId());
@@ -67,6 +75,11 @@ public class LikeService {
                     .createdAt(LocalDateTime.now())
                     .build();
             likeRepository.save(like);
+        }
+
+        // Tạo notification (nếu không phải self-like)
+        if (!comment.getUserId().equals(userId)) {
+            notificationService.createLikeCommentNotification(comment.getUserId(), userId, comment.getId());
         }
 
         long count = likeRepository.countByCommentId(comment.getId());

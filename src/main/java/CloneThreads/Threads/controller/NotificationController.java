@@ -50,8 +50,6 @@ public class NotificationController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
-            log.info("Fetching activities for userId: {}, type: {}, limit: {}", userId, type, limit);
-
             List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
 
             // Filter by type if not "all"
@@ -68,6 +66,7 @@ public class NotificationController {
                 activity.put("type", n.getType());
                 activity.put("message", n.getMessage());
                 activity.put("timestamp", n.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                activity.put("postId", n.getPostId());
                 activity.put("read", n.getIsRead());
 
                 // User info (fromUser)
