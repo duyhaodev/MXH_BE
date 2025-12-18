@@ -7,6 +7,7 @@ import CloneThreads.Threads.entity.Post;
 import CloneThreads.Threads.entity.User;
 import CloneThreads.Threads.mapper.CommentMapper;
 import CloneThreads.Threads.repository.CommentRepository;
+import CloneThreads.Threads.repository.LikeRepository;
 import CloneThreads.Threads.repository.PostRepository;
 import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
@@ -34,6 +35,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final LikeRepository likeRepository;
     private final CommentMapper commentMapper;
     private final Cloudinary cloudinary;
 
@@ -137,15 +139,24 @@ public class CommentService {
         }
     }
 
-    public List<CommentResponse> getCommentsByPost(String postId, int page, int size) {
+    public List<CommentResponse> getCommentsByPost(String postId, String currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of( page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Comment> commentPage = commentRepository.findByPostIdOrderByCreatedAtDesc(postId, pageable);
         return commentPage.getContent()
                 .stream()
                 .map(c -> {
                     User u = userRepository.findById(c.getUserId()).orElse(null);
-                    return commentMapper.toResponse(c, u);
+
+                    long likeCount = likeRepository.countByCommentId(c.getId());
+                    boolean likedByCurrentUser = currentUserId != null
+                            && likeRepository.existsByUserIdAndCommentId(currentUserId, c.getId());
+
+                    CommentResponse res = commentMapper.toResponse(c, u);
+                    res.setLikeCount(likeCount);
+                    res.setLikedByCurrentUser(likedByCurrentUser);
+                    return res;
                 })
                 .toList();
     }
+
 }
