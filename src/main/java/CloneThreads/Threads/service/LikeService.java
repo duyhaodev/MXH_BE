@@ -70,16 +70,15 @@ public class LikeService {
             // LIKE
             Like like = Like.builder()
                     .userId(userId)
-                    .postId(null)
+                    .postId(comment.getPostId())
                     .commentId(comment.getId())
                     .createdAt(LocalDateTime.now())
                     .build();
             likeRepository.save(like);
-        }
-
-        // Tạo notification (nếu không phải self-like)
-        if (!comment.getUserId().equals(userId)) {
-            notificationService.createLikeCommentNotification(comment.getUserId(), userId, comment.getId());
+            // Tạo notification like (nếu không phải self-like)
+            if (!comment.getUserId().equals(userId)) {
+                notificationService.createLikeCommentNotification(comment.getUserId(), userId, comment.getId(), comment.getPostId());
+            }
         }
 
         long count = likeRepository.countByCommentId(comment.getId());

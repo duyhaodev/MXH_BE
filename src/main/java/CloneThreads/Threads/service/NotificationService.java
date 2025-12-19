@@ -122,6 +122,19 @@ public class NotificationService {
             if ("follow".equals(notification.getType())) {
                 activity.put("followed", false);
             }
+            else if ("comment_post".equals(notification.getType())) {
+                activity.put("postId", notification.getPostId());
+            }
+            else if ("repost".equals(notification.getType())) {
+                activity.put("postId", notification.getPostId());
+            }
+            else if ("like_post".equals(notification.getType())) {
+                activity.put("postId", notification.getPostId());
+            }
+            else if ("like_comment".equals(notification.getType())) {
+                activity.put("postId", notification.getPostId());
+                activity.put("commentId", notification.getCommentId());
+            }
 
             String jsonPayload = objectMapper.writeValueAsString(activity);
 
@@ -143,14 +156,14 @@ public class NotificationService {
     }
 
     @Transactional
-    public Notification createLikeCommentNotification(String toUserId, String fromUserId, String commentId) {
+    public Notification createLikeCommentNotification(String toUserId, String fromUserId, String commentId, String postId) {
         if (toUserId.equals(fromUserId)) {
             return null;  // Không tạo noti nếu self-like
         }
 
         // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
         UserResponse fromUser = userService.getUser(fromUserId);
-        String fromUserDisplayName = fromUser.getFullName();
 
         // Check if notification already exists
         Optional<Notification> existingNotification = notificationRepo.findExistForCommentNotification(toUserId, fromUserId, "like_comment", commentId);
@@ -167,6 +180,7 @@ public class NotificationService {
                     .type("like_comment")
                     .message(fromUserDisplayName + " liked your comment")
                     .commentId(commentId)
+                    .postId(postId)
                     .isRead(false)
                     .createdAt(LocalDateTime.now().withNano(0))
                     .build();
@@ -182,8 +196,8 @@ public class NotificationService {
         }
 
         // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
         UserResponse fromUser = userService.getUser(fromUserId);
-        String fromUserDisplayName = fromUser.getFullName();
 
         // Check if notification already exists
         Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "comment_post", postId);
@@ -248,8 +262,8 @@ public class NotificationService {
         }
 
         // Fetch fromUser displayName for message
+        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
         UserResponse fromUser = userService.getUser(fromUserId);
-        String fromUserDisplayName = fromUser.getFullName();
 
         // Check if notification already exists (với postId trùng)
         Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "repost_post", postId);
