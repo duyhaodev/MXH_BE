@@ -58,6 +58,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(List.of("http://localhost:3000")); // origin FE
+        //cors.setAllowedOrigins(List.of("https://45963f11c832.ngrok-free.app")); // ngrok FE
+
         cors.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cors.setAllowedHeaders(List.of("*"));
         // Nếu frontend dùng cookie/withCredentials: bật dòng dưới và KHÔNG dùng "*"
