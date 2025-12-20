@@ -20,6 +20,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public class UserService {
     private final UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     private final Cloudinary cloudinary;
+    private final EmailService emailService;
 
     public UserResponse createUser(UserCreationRequest request){
         if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByUserName(request.getUserName())){
@@ -40,11 +42,76 @@ public class UserService {
 
         User user = userMapper.toUser(request);
         user.setProfileLink("@" + request.getUserName());
+        user.setAvatarUrl("https://res.cloudinary.com/dqdivgrkz/image/upload/v1766129961/Gemini_Generated_Image_y5h7uy5h7uy5h7uy_r2wtrj.png");
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        
+        // Generate OTP
+        String code = String.valueOf((int) ((Math.random() * 900000) + 100000));
+        user.setVerificationCode(code);
+        user.setVerificationAttempts(0);
+        user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(5));
+        user.setEnabled(false);
+        
+        User savedUser = userRepository.save(user);
+        
+        // Send Email
+        emailService.sendVerificationEmail(savedUser.getEmail(), code);
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        return userMapper.toUserResponse(savedUser);
     }
 
+
+    public UserResponse verifyUser(String email, String code) {
+        User user = userRepository.findByEmail(email) 
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.isEnabled()) {
+            return userMapper.toUserResponse(user);
+        }
+
+        // Check if blocked (Max attempts)
+        int attempts = user.getVerificationAttempts() == null ? 0 : user.getVerificationAttempts();
+        if (attempts >= 5) {
+             throw new AppException(ErrorCode.MAX_OTP_ATTEMPTS);
+        }
+
+        // Check expiry
+        if (user.getOtpExpiryTime() != null && LocalDateTime.now().isAfter(user.getOtpExpiryTime())) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        if (code != null && code.equals(user.getVerificationCode())) {
+            user.setEnabled(true);
+            user.setVerificationCode(null);
+            user.setVerificationAttempts(0);
+            return userMapper.toUserResponse(userRepository.save(user));
+        } else {
+            // Increment fail attempts
+            user.setVerificationAttempts(attempts + 1);
+            userRepository.save(user);
+            throw new AppException(ErrorCode.INVALID_OTP_KEY);
+        }
+    }
+
+    public void resendOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.isEnabled()) {
+            throw new RuntimeException("Account already verified");
+        }
+
+        // Generate new OTP
+        String code = String.valueOf((int) ((Math.random() * 900000) + 100000));
+        user.setVerificationCode(code);
+        user.setVerificationAttempts(0);
+        user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(5));
+        
+        userRepository.save(user);
+        
+        // Send Email
+        emailService.sendVerificationEmail(user.getEmail(), code);
+    }
 
     public UserResponse getUser(String id) {
         return userMapper.toUserResponse(userRepository.findById(id)

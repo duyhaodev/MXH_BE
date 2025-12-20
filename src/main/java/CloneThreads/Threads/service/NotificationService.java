@@ -144,7 +144,6 @@ public class NotificationService {
                     SocketIOClient client = socketIOServer.getClient(clientUUID);
                     if (client != null) {
                         client.sendEvent("new_notification", jsonPayload);
-                        log.info("Sent notification to user {} via socket {}", notification.getUserId(), clientUUID);
                     }
                 } catch (Exception e) {
                     log.error("Error sending socket to session {}", session.getSocketSessionId(), e);
@@ -318,5 +317,10 @@ public class NotificationService {
         }
         notification.setIsRead(true);
         notificationRepo.save(notification);
+    }
+
+    @Transactional
+    public void markAllAsRead(String userId) {
+        notificationRepo.markAllAsRead(userId);
     }
 }

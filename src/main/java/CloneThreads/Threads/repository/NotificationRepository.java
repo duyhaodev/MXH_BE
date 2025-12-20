@@ -27,4 +27,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
     Optional<Notification> findExistForCommentNotification(@Param("userId") String userId, @Param("fromUserId") String fromUserId, @Param("type") String type, @Param("commentId") String commentId);
 
     long countByUserIdAndIsReadFalse(String userId);
+
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId AND n.isRead = false")
+    void markAllAsRead(@Param("userId") String userId);
 }

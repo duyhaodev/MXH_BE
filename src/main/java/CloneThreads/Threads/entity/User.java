@@ -52,6 +52,18 @@ public class User {
     @Column(name = "following_count", nullable = false)
     int followingCount = 0;
 
+    @Column(name = "verification_code")
+    String verificationCode;
+
+    @Column(name = "enabled")
+    boolean enabled = false;
+
+    @Column(name = "verification_attempts")
+    Integer verificationAttempts = 0;
+
+    @Column(name = "otp_expiry_time")
+    LocalDateTime otpExpiryTime;
+
     @PrePersist
     public void prePersist() {
         // tự sinh id kiểu chuỗi UUID

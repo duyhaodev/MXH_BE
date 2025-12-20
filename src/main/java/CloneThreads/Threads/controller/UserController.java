@@ -30,6 +30,21 @@ public class UserController {
                 .build();
     }
 
+    @PostMapping("/verify")
+    ApiResponse<UserResponse> verifyUser(@RequestParam String email, @RequestParam String code) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.verifyUser(email, code))
+                .build();
+    }
+
+    @PostMapping("/resend-otp")
+    ApiResponse<String> resendOtp(@RequestParam String email) {
+        userService.resendOtp(email);
+        return ApiResponse.<String>builder()
+                .result("OTP has been resent to your email")
+                .build();
+    }
+
     @GetMapping("/myInfo")
     ApiResponse<UserResponse> getMyInfo() {
         return ApiResponse.<UserResponse>builder()

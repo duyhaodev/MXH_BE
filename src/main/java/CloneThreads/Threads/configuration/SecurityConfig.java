@@ -26,7 +26,7 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {"/users",
-            "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh"};
+            "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/users/verify", "/users/resend-otp"};
 
 
     private CustomJwtDecoder customJwtDecoder;
