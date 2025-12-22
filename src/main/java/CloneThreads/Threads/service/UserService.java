@@ -72,11 +72,15 @@ public class UserService {
         // Check if blocked (Max attempts)
         int attempts = user.getVerificationAttempts() == null ? 0 : user.getVerificationAttempts();
         if (attempts >= 5) {
+            user.setVerificationCode(null);
+            userRepository.save(user);
              throw new AppException(ErrorCode.MAX_OTP_ATTEMPTS);
         }
 
         // Check expiry
         if (user.getOtpExpiryTime() != null && LocalDateTime.now().isAfter(user.getOtpExpiryTime())) {
+            user.setVerificationCode(null);
+            userRepository.save(user);
             throw new AppException(ErrorCode.OTP_EXPIRED);
         }
 
@@ -136,11 +140,15 @@ public class UserService {
         // Check attempts
         int attempts = user.getVerificationAttempts() == null ? 0 : user.getVerificationAttempts();
         if (attempts >= 5) {
+            user.setVerificationCode(null);
+            userRepository.save(user);
             throw new AppException(ErrorCode.MAX_OTP_ATTEMPTS);
         }
 
         // Check expiry
         if (user.getOtpExpiryTime() != null && LocalDateTime.now().isAfter(user.getOtpExpiryTime())) {
+            user.setVerificationCode(null);
+            userRepository.save(user);
             throw new AppException(ErrorCode.OTP_EXPIRED);
         }
 
