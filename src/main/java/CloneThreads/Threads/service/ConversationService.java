@@ -175,6 +175,7 @@ public class ConversationService {
                     if (u != null) {
                         response.setConversationName(u.getUserName()); // Hoặc fullName
                         response.setConversationAvatar(u.getAvatarUrl());
+                        response.setPartnerId(u.getId());
                     }
                 });
 

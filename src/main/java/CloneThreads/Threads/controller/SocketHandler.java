@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -52,14 +53,31 @@ public class SocketHandler {
                 }
                 
                 String userUuid = userOptional.get().getId();
+                
+                // Store userId in client attributes for easy access on disconnect
+                client.set("userId", userUuid);
+
+                // Check if user is already online (has other sessions)
+                boolean wasAlreadyOnline = webSocketSessionRepository.countByUserId(userUuid) > 0;
+
                 // Persist webSocketSession
                 WebSocketSession webSocketSession = WebSocketSession.builder()
                         .socketSessionId(client.getSessionId().toString())
-                        .userId(userUuid) // Save UUID instead of username
+                        .userId(userUuid)
                         .createdAt(LocalDateTime.now())
                         .build();
 
                 webSocketSessionRepository.save(webSocketSession);
+
+                // 1. Send CURRENT online user list to the newly connected user
+                List<String> onlineUserIds = webSocketSessionRepository.findAllActiveUserIds();
+                client.sendEvent("online_users_list", onlineUserIds);
+
+                // 2. Broadcast to ALL others that this user is now online (only if it's their first session)
+                if (!wasAlreadyOnline) {
+                    server.getBroadcastOperations().sendEvent("user_status_change", 
+                        java.util.Map.of("userId", userUuid, "status", "online"));
+                }
 
             } else {
                 log.error("Authenticated fail: {}", client.getSessionId());
@@ -73,7 +91,21 @@ public class SocketHandler {
 
     @OnDisconnect
     public void clientDisconnected(SocketIOClient client) {
-        webSocketSessionRepository.deleteBySocketSessionId(client.getSessionId().toString());
+        String userId = client.get("userId");
+        String sessionId = client.getSessionId().toString();
+        
+        webSocketSessionRepository.deleteBySocketSessionId(sessionId);
+
+        if (userId != null) {
+            // Check if this was the last session
+            boolean isStillOnline = webSocketSessionRepository.countByUserId(userId) > 0;
+            
+            if (!isStillOnline) {
+                // Broadcast to ALL that this user is now offline
+                server.getBroadcastOperations().sendEvent("user_status_change", 
+                    java.util.Map.of("userId", userId, "status", "offline"));
+            }
+        }
     }
 
     @PostConstruct
