@@ -204,6 +204,7 @@ public class NotificationService {
         if (existingNotification.isPresent()) {
             Notification notification = existingNotification.get();
             notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            sendRealtimeNotification(notification, fromUser);
             return notificationRepo.save(notification);
         } else {
             Notification notification = Notification.builder()

@@ -113,6 +113,50 @@ public class UserService {
         emailService.sendVerificationEmail(user.getEmail(), code);
     }
 
+    public void forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Generate OTP
+        String code = String.valueOf((int) ((Math.random() * 900000) + 100000));
+        user.setVerificationCode(code);
+        user.setVerificationAttempts(0);
+        user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(5));
+
+        userRepository.save(user);
+
+        // Send Email
+        emailService.sendVerificationEmail(user.getEmail(), code);
+    }
+
+    public void resetPassword(String email, String otp, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Check attempts
+        int attempts = user.getVerificationAttempts() == null ? 0 : user.getVerificationAttempts();
+        if (attempts >= 5) {
+            throw new AppException(ErrorCode.MAX_OTP_ATTEMPTS);
+        }
+
+        // Check expiry
+        if (user.getOtpExpiryTime() != null && LocalDateTime.now().isAfter(user.getOtpExpiryTime())) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        // Verify OTP
+        if (otp != null && otp.equals(user.getVerificationCode())) {
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            user.setVerificationCode(null);
+            user.setVerificationAttempts(0);
+            userRepository.save(user);
+        } else {
+            user.setVerificationAttempts(attempts + 1);
+            userRepository.save(user);
+            throw new AppException(ErrorCode.INVALID_OTP_KEY);
+        }
+    }
+
     public UserResponse getUser(String id) {
         return userMapper.toUserResponse(userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));
