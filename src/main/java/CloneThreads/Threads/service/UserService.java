@@ -36,12 +36,16 @@ public class UserService {
     private final EmailService emailService;
 
     public UserResponse createUser(UserCreationRequest request){
-        if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByUserName(request.getUserName())){
+        String email = request.getEmail();
+        String derivedUserName = email.substring(0, email.indexOf("@"));
+
+        if (userRepository.existsByEmail(email) || userRepository.existsByUserName(derivedUserName)){
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
         User user = userMapper.toUser(request);
-        user.setProfileLink("@" + request.getUserName());
+        user.setUserName(derivedUserName);
+        user.setProfileLink("@" + derivedUserName);
         user.setAvatarUrl("https://res.cloudinary.com/dqdivgrkz/image/upload/v1766129961/Gemini_Generated_Image_y5h7uy5h7uy5h7uy_r2wtrj.png");
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         
