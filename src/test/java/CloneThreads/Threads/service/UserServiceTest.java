@@ -1,7 +1,10 @@
 package CloneThreads.Threads.service;
 
+import CloneThreads.Threads.dto.request.UserCreationRequest;
 import CloneThreads.Threads.dto.response.UserResponse;
 import CloneThreads.Threads.entity.User;
+import CloneThreads.Threads.exception.AppException;
+import CloneThreads.Threads.exception.ErrorCode;
 import CloneThreads.Threads.mapper.UserMapper;
 import CloneThreads.Threads.repository.UserRepository;
 import com.cloudinary.Cloudinary;
@@ -19,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -38,18 +41,77 @@ class UserServiceTest {
     @Mock
     private Cloudinary cloudinary;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        // No special setup needed yet
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
     }
+
+    // --- TEST REGISTER USER ---
+
+    @Test
+    void createUser_Success() {
+        // Arrange
+        UserCreationRequest request = UserCreationRequest.builder()
+                .email("newuser@gmail.com")
+                .fullName("New User")
+                .password("password123")
+                .build();
+
+        User userEntity = User.builder()
+                .email("newuser@gmail.com")
+                .userName("newuser")
+                .build();
+        
+        User savedUser = User.builder()
+                .id("user-id-123")
+                .email("newuser@gmail.com")
+                .userName("newuser")
+                .enabled(false)
+                .build();
+
+        UserResponse response = UserResponse.builder()
+                .id("user-id-123")
+                .email("newuser@gmail.com")
+                .build();
+
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByUserName(anyString())).thenReturn(false);
+        when(userMapper.toUser(request)).thenReturn(userEntity);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded-pass");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userMapper.toUserResponse(savedUser)).thenReturn(response);
+
+        // Act
+        UserResponse result = userService.createUser(request);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("newuser@gmail.com", result.getEmail());
+        verify(emailService).sendVerificationEmail(eq("newuser@gmail.com"), anyString());
+    }
+
+    @Test
+    void createUser_Fail_EmailExisted() {
+        // Arrange
+        UserCreationRequest request = UserCreationRequest.builder().email("exist@gmail.com").build();
+        when(userRepository.existsByEmail("exist@gmail.com")).thenReturn(true);
+
+        // Act & Assert
+        AppException exception = assertThrows(AppException.class, () -> userService.createUser(request));
+        assertEquals(ErrorCode.USER_EXISTED, exception.getErrorCode());
+    }
+
+    // --- TEST SEARCH USER ---
 
     @Test
     void searchUser_excludeSelf() {
@@ -75,10 +137,6 @@ class UserServiceTest {
 
         // Mock Mapper
         when(userMapper.toUserResponse(otherUser)).thenReturn(otherUserResponse);
-        // We don't expect toUserResponse to be called for currentUser, so we don't mock it specifically 
-        // or we mock it generally if strict stubbing is off. 
-        // With strict stubbing (default in MockitoExtension), unused stubs might throw errors, 
-        // but here we are testing that it is NOT called.
 
         // Act
         List<UserResponse> results = userService.searchUser(keyword);
