@@ -9,72 +9,74 @@
 </p>
 
 > **Project Description**
-> 
+>
 > This is the **Backend** component of the **Threads Clone** project. It serves as the core engine of the system, handling business logic, data persistence, and providing a robust set of RESTful APIs for the frontend application. The system is designed to handle social media interactions, real-time messaging, and notifications.
 
 ## 🔗 Related Repository
 
-*   **Frontend (React):** [MXH_FE Repository](https://github.com/duyhaodev/MXH_FE)
+- **Frontend (React):** [MXH_FE Repository](https://github.com/duyhaodev/MXH_FE)
 
 ## ✨ Key Features
 
-*   **🔐 Authentication & Security:**
-    *   JWT-based stateless authentication (Access Token & Refresh Token).
-    *   Email verification via OTP (JavaMailSender).
-    *   Secure password hashing with BCrypt.
-*   **📝 Post Management:**
-    *   Create text posts with multimedia support (Images/Videos via Cloudinary).
-    *   Repost, Quote, and Delete functionality.
-    *   News Feed generation.
-*   **💬 Interaction:**
-    *   Comment system with multi-level replies.
-    *   Like/Unlike posts and comments.
-*   **⚡ Real-time Features (Socket.IO):**
-    *   Instant push notifications (Likes, Comments, Follows).
-    *   Real-time 1-on-1 private messaging/chat.
-    *   Online/Offline user status.
-*   **👥 Social Graph:**
-    *   Follow/Unfollow users.
-    *   User search and profile management.
+- **🔐 Authentication & Security:**
+  - JWT-based stateless authentication (Access Token & Refresh Token).
+  - Email verification via OTP (JavaMailSender).
+  - Secure password hashing with BCrypt.
+- **📝 Post Management:**
+  - Create text posts with multimedia support (Images/Videos via Cloudinary).
+  - Repost, Quote, and Delete functionality.
+  - News Feed generation.
+- **💬 Interaction:**
+  - Comment system with multi-level replies.
+  - Like/Unlike posts and comments.
+- **⚡ Real-time Features (Socket.IO):**
+  - Instant push notifications (Likes, Comments, Follows).
+  - Real-time 1-on-1 private messaging/chat.
+  - Online/Offline user status.
+- **👥 Social Graph:**
+  - Follow/Unfollow users.
+  - User search and profile management.
 
 ## 🛠 Tech Stack
 
-*   **Core:** Java 21, Spring Boot 3.5.x
-*   **Database:** PostgreSQL, Spring Data JPA
-*   **Security:** Spring Security, OAuth2 Resource Server, Nimbus JOSE + JWT
-*   **Real-time:** Netty-SocketIO
-*   **Storage:** Cloudinary SDK (for image/video storage)
-*   **Utilities:** MapStruct (DTO Mapping), Lombok, Maven
+- **Core:** Java 21, Spring Boot 3.5.x
+- **Database:** PostgreSQL, Spring Data JPA
+- **Security:** Spring Security, OAuth2 Resource Server, Nimbus JOSE + JWT
+- **Real-time:** Netty-SocketIO
+- **Storage:** Cloudinary SDK (for image/video storage)
+- **Utilities:** MapStruct (DTO Mapping), Lombok, Maven
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-*   Java Development Kit (JDK) 21
-*   Maven 3.x
-*   PostgreSQL
-*   A Cloudinary Account (for media upload)
-*   A Gmail Account (for sending OTPs via SMTP)
+- Java Development Kit (JDK) 21
+- Maven 3.x
+- PostgreSQL
+- A Cloudinary Account (for media upload)
+- A Gmail Account (for sending OTPs via SMTP)
 
 ### Installation
 
 To keep the project organized, it is recommended to create a parent folder for both Backend and Frontend:
 
 1.  **Create a parent folder and clone the project**
+
     ```bash
     mkdir ThreadsClone
     cd ThreadsClone
 
     # Clone Backend
-    git clone https://github.com/duyhaodev/backend-threads-clone.git Backend
+    git clone https://github.com/duyhaodev/MXH_BE.git
 
     # Clone Frontend (optional but recommended)
-    git clone https://github.com/duyhaodev/MXH_FE.git Frontend
+    git clone https://github.com/duyhaodev/MXH_FE.git
     ```
 
 2.  **Navigate to Backend**
+
     ```bash
-    cd Backend
+    cd MXH_BE
     ```
 
 3.  **Configure Environment Variables**
@@ -108,29 +110,13 @@ To keep the project organized, it is recommended to create a parent folder for b
 
 ## 📚 API Endpoints Overview
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| **POST** | `/auth/token` | Login & get JWT |
-| **POST** | `/users` | Register new user |
-| **GET** | `/feed` | Get news feed |
-| **POST** | `/posts` | Create a new post |
-| **POST** | `/messages/create` | Send a private message |
-| **GET** | `/api/notifications`| Get user notifications |
+| Method   | Endpoint             | Description            |
+| :------- | :------------------- | :--------------------- |
+| **POST** | `/auth/token`        | Login & get JWT        |
+| **POST** | `/users`             | Register new user      |
+| **GET**  | `/feed`              | Get news feed          |
+| **POST** | `/posts`             | Create a new post      |
+| **POST** | `/messages/create`   | Send a private message |
+| **GET**  | `/api/notifications` | Get user notifications |
 
-## 🤝 Contributing
-
-Contributions, issues and feature requests are welcome!
-Feel free to check [issues page](https://github.com/duyhaodev/issues).
-
-## 👤 Author
-
-**DuyHao**
-
-*   Github: [@duyhaodev](https://github.com/duyhaodev)
-*   LinkedIn: [@duyhaodev](https://linkedin.com/in/duyhaodev)
-
-## ⭐️ Show your support
-
-Give a ⭐️ if this project helped you!
-
-***
+---
