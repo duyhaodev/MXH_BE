@@ -37,7 +37,7 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getActivities(Authentication auth,
-                                                             @RequestParam(defaultValue = "all") String type,
+                                                             @RequestParam(required = false) List<String> type,
                                                              @RequestParam(defaultValue = "10") int limit) {
         try {
             if (auth == null || auth.getName() == null) {
@@ -52,12 +52,20 @@ public class NotificationController {
 
             List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
 
-            // Filter by type if not "all"
-            if (!"all".equals(type)) {
+            final List<String> finalTypes =
+                    (type == null) ? List.of()
+                            : type.stream()
+                            .filter(t -> t != null
+                                    && !"all".equalsIgnoreCase(t)
+                                    && !"undefined".equalsIgnoreCase(t))
+                            .toList();
+
+            if (!finalTypes.isEmpty()) {
                 notifications = notifications.stream()
-                        .filter(n -> n.getType().equals(type))
+                        .filter(n -> finalTypes.contains(n.getType()))
                         .toList();
             }
+
 
             // Map to activity format
             List<Map<String, Object>> activities = notifications.stream().map(n -> {
