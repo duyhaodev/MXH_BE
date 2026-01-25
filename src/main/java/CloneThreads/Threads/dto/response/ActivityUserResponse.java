@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ActivityUserResponse {
+    private String id;
     private String username;
     private String displayName;
     private String avatar;
+    private Boolean followed;
 }

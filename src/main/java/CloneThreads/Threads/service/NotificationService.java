@@ -6,6 +6,7 @@ import CloneThreads.Threads.dto.response.UserResponse;
 import CloneThreads.Threads.entity.Notification;
 import CloneThreads.Threads.entity.WebSocketSession;
 import CloneThreads.Threads.mapper.NotificationMapper;
+import CloneThreads.Threads.repository.FollowRepository;
 import CloneThreads.Threads.repository.NotificationRepository;
 import CloneThreads.Threads.repository.WebSocketSessionRepository;
 import CloneThreads.Threads.exception.AppException;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class NotificationService {
     static Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     NotificationRepository notificationRepo;
+    FollowRepository followRepo;
     UserService userService;
     SocketIOServer socketIOServer;
     WebSocketSessionRepository webSocketSessionRepository;
@@ -55,6 +58,11 @@ public class NotificationService {
             Notification notification = existingNotification.get();
             // Update the date
             notification.setCreatedAt(LocalDateTime.now().withNano(0));
+
+            if (Boolean.TRUE.equals(notification.getIsRead())) {
+                notification.setIsRead(false);
+                sendRealtimeNotification(notification, fromUser);
+            }
 
             return notificationRepo.save(notification);
         } else {
@@ -367,10 +375,16 @@ public class NotificationService {
                     .distinct()
                     .map(uid -> {
                         var u = userService.getUser(uid);
+                        boolean followed = false;
+                        if ("follow".equals(group.get(0).getType())) {
+                            followed = followRepo.existsByFollowerAndFollowing(userId, uid);
+                        }
                         return new ActivityUserResponse(
+                                u.getId(),
                                 u.getUserName(),
                                 u.getFullName(),
-                                u.getAvatarUrl()
+                                u.getAvatarUrl(),
+                                followed
                         );
                     })
                     .toList();

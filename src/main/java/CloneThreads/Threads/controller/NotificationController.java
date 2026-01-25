@@ -99,8 +99,8 @@ public class NotificationController {
         }
     }
 
-    @PostMapping("/follow-back/{notificationId}")
-    public ResponseEntity<?> followBack(@PathVariable String notificationId, Authentication auth) {
+    @PostMapping("/follow-back/{targetUserId}")
+    public ResponseEntity<?> followBack(@PathVariable String targetUserId, Authentication auth) {
         try {
             if (auth == null || auth.getName() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -113,23 +113,24 @@ public class NotificationController {
                         .body(Map.of("error", "Invalid user"));
             }
 
-            Notification notification = notificationService.findById(notificationId)
-                    .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));
+//            Notification notification = notificationService.findById(notificationId)
+//                    .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
-            if (!notification.getUserId().equals(currentUserId) || !"follow".equals(notification.getType())) {
-                throw new AppException(ErrorCode.INVALID_NOTIFICATION);
-            }
+//            if (!notification.getUserId().equals(currentUserId) || !"follow".equals(notification.getType())) {
+//                throw new AppException(ErrorCode.INVALID_NOTIFICATION);
+//            }
+//
+//            String targetUserId = notification.getFromUserId();
+//            if (targetUserId == null || targetUserId.isEmpty()) {
+//                return ResponseEntity.badRequest().body(Map.of("error", "Invalid target user"));
+//            }
 
-            String targetUserId = notification.getFromUserId();
-            if (targetUserId == null || targetUserId.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid target user"));
-            }
-
+            log.info("Follow back: currentUserId={}, targetUserId={}", currentUserId, targetUserId);
             // Call follow service
             FollowResponse followResponse = followService.followUser(currentUserId, targetUserId);
 
             // Mark original notification as read
-            notificationService.markAsRead(notificationId, currentUserId);
+//            notificationService.markAsRead(notificationId, currentUserId);
 
             log.info("Follow back success: currentUserId={}, targetUserId={}", currentUserId, targetUserId);
             return ResponseEntity.ok(Map.of("success", true, "message", followResponse.getMessage()));
@@ -139,8 +140,8 @@ public class NotificationController {
             return ResponseEntity.status(status)
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Unexpected error in followBack for notificationId: {} and user: {}", notificationId,
-                    auth != null ? auth.getName() : "unauthenticated", e);
+//            log.error("Unexpected error in followBack for notificationId: {} and user: {}", notificationId,
+//                    auth != null ? auth.getName() : "unauthenticated", e);
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Lỗi server, vui lòng thử lại sau!"));
