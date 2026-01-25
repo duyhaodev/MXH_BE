@@ -1,8 +1,11 @@
 package CloneThreads.Threads.service;
 
+import CloneThreads.Threads.dto.response.ActivityGroupResponse;
+import CloneThreads.Threads.dto.response.ActivityUserResponse;
 import CloneThreads.Threads.dto.response.UserResponse;
 import CloneThreads.Threads.entity.Notification;
 import CloneThreads.Threads.entity.WebSocketSession;
+import CloneThreads.Threads.mapper.NotificationMapper;
 import CloneThreads.Threads.repository.NotificationRepository;
 import CloneThreads.Threads.repository.WebSocketSessionRepository;
 import CloneThreads.Threads.exception.AppException;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -323,5 +327,61 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(String userId) {
         notificationRepo.markAllAsRead(userId);
+    }
+
+    public List<ActivityGroupResponse> getGroupedActivities(
+            String userId,
+            List<String> types,
+            int limit) {
+
+        List<Notification> notifications =
+                notificationRepo.findByUserIdOrderByCreatedAtDesc(userId);
+
+        List<String> safeTypes = (types == null)
+                ? List.of()
+                : types.stream()
+                .filter(t -> t != null
+                        && !"all".equalsIgnoreCase(t)
+                        && !"undefined".equalsIgnoreCase(t))
+                .toList();
+
+        if (!safeTypes.isEmpty()) {
+            notifications = notifications.stream()
+                    .filter(n -> safeTypes.contains(n.getType()))
+                    .toList();
+        }
+
+        Map<String, List<Notification>> grouped =
+                notifications.stream()
+                        .collect(Collectors.groupingBy(n ->
+                                n.getType() + "_" + (n.getPostId() != null ? n.getPostId() : "none")
+                        ));
+
+        List<ActivityGroupResponse> result = new ArrayList<>();
+
+        for (List<Notification> group : grouped.values()) {
+            ActivityGroupResponse dto = NotificationMapper.toGroup(group);
+
+            List<ActivityUserResponse> users = group.stream()
+                    .map(Notification::getFromUserId)
+                    .distinct()
+                    .map(uid -> {
+                        var u = userService.getUser(uid);
+                        return new ActivityUserResponse(
+                                u.getUserName(),
+                                u.getFullName(),
+                                u.getAvatarUrl()
+                        );
+                    })
+                    .toList();
+
+            dto.setUsers(users);
+            result.add(dto);
+        }
+
+        return result.stream()
+                .sorted(Comparator.comparing(ActivityGroupResponse::getCreatedAt).reversed())
+                .limit(limit)
+                .toList();
     }
 }

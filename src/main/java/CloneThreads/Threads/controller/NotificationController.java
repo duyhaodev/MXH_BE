@@ -1,5 +1,6 @@
 package CloneThreads.Threads.controller;
 
+import CloneThreads.Threads.dto.response.ActivityGroupResponse;
 import CloneThreads.Threads.dto.response.FollowResponse;
 import CloneThreads.Threads.entity.Notification;
 import CloneThreads.Threads.service.FollowService;
@@ -36,81 +37,24 @@ public class NotificationController {
     private FollowService followService;
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getActivities(Authentication auth,
-                                                             @RequestParam(required = false) List<String> type,
-                                                             @RequestParam(defaultValue = "10") int limit) {
-        try {
-            if (auth == null || auth.getName() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
+    public ResponseEntity<?> getActivities(
+            Authentication auth,
+            @RequestParam(required = false) List<String> type,
+            @RequestParam(defaultValue = "10") int limit) {
 
-            String userId = userService.getUserIdByUsername(auth.getName());
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
-
-            final List<String> finalTypes =
-                    (type == null) ? List.of()
-                            : type.stream()
-                            .filter(t -> t != null
-                                    && !"all".equalsIgnoreCase(t)
-                                    && !"undefined".equalsIgnoreCase(t))
-                            .toList();
-
-            if (!finalTypes.isEmpty()) {
-                notifications = notifications.stream()
-                        .filter(n -> finalTypes.contains(n.getType()))
-                        .toList();
-            }
-
-
-            // Map to activity format
-            List<Map<String, Object>> activities = notifications.stream().map(n -> {
-                Map<String, Object> activity = new HashMap<>();
-                activity.put("id", n.getId());
-                activity.put("type", n.getType());
-                activity.put("message", n.getMessage());
-                activity.put("timestamp", n.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                activity.put("postId", n.getPostId());
-                activity.put("read", n.getIsRead());
-
-                // User info (fromUser)
-                try {
-                    var fromUserResp = userService.getUser(n.getFromUserId());
-                    Map<String, Object> user = new HashMap<>();
-                    user.put("username", fromUserResp.getUserName());
-                    user.put("displayName", fromUserResp.getFullName());
-                    user.put("avatar", fromUserResp.getAvatarUrl());
-                    activity.put("user", user);
-                } catch (Exception e) {
-                    Map<String, Object> user = new HashMap<>();
-                    user.put("username", "Unknown");
-                    user.put("displayName", "Unknown User");
-                    user.put("avatar", "");
-                    user.put("verified", false);
-                    activity.put("user", user);
-                }
-
-                // Check trạng thái follow back cho type "follow"
-                if ("follow".equals(n.getType())) {
-                    boolean followed = followService.isFollowing(userId, n.getFromUserId());
-                    activity.put("followed", followed);
-                }
-
-                return activity;
-            }).limit(limit).toList();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("activities", activities);
-            response.put("unreadCount", notificationService.getUnreadCount(userId));
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Lỗi server, vui lòng thử lại sau!"));
+        if (auth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        String userId = userService.getUserIdByUsername(auth.getName());
+
+        List<ActivityGroupResponse> activities =
+                notificationService.getGroupedActivities(userId, type, limit);
+
+        return ResponseEntity.ok(Map.of(
+                "activities", activities,
+                "unreadCount", notificationService.getUnreadCount(userId)
+        ));
     }
 
     @PatchMapping("/{notificationId}/read")
