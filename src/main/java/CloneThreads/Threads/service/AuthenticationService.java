@@ -74,12 +74,16 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_EXISTED));
+                .orElseThrow(() -> new AppException(ErrorCode.WRONG_EMAIL_PASSWORD));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
 
         if (!authenticated) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+            throw new AppException(ErrorCode.WRONG_EMAIL_PASSWORD);
+        }
+
+        if (!user.isEnabled()) {
+            throw new AppException(ErrorCode.USER_NOT_ENABLED);
         }
 
         var token = generateToken(user);

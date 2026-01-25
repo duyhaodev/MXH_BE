@@ -14,9 +14,6 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 public class UserCreationRequest {
-    @NotBlank(message = "USERNAME_NOT_BLANK")
-    String userName;
-
     @NotBlank(message = "FULLNAME_NOT_BLANK")
     String fullName;
 

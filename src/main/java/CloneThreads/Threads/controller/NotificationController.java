@@ -46,7 +46,6 @@ public class NotificationController {
 
             String userId = userService.getUserIdByUsername(auth.getName());
             if (userId == null) {
-                log.warn("Invalid userId for getActivities: username={}", auth.getName());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
@@ -86,7 +85,6 @@ public class NotificationController {
                     user.put("avatar", fromUserResp.getAvatarUrl());
                     activity.put("user", user);
                 } catch (Exception e) {
-                    log.warn("Failed to load user info for fromUserId: {} in notification: {}", n.getFromUserId(), n.getId(), e);
                     Map<String, Object> user = new HashMap<>();
                     user.put("username", "Unknown");
                     user.put("displayName", "Unknown User");
@@ -99,7 +97,6 @@ public class NotificationController {
                 if ("follow".equals(n.getType())) {
                     boolean followed = followService.isFollowing(userId, n.getFromUserId());
                     activity.put("followed", followed);
-                    log.debug("Follow status for notification {}: followed={}", n.getId(), followed);
                 }
 
                 return activity;
@@ -111,7 +108,6 @@ public class NotificationController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Unexpected error in getActivities for user: {}, type: {}", auth != null ? auth.getName() : "unauth", type, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Lỗi server, vui lòng thử lại sau!"));
         }
@@ -130,14 +126,32 @@ public class NotificationController {
             }
 
             notificationService.markAsRead(notificationId, userId);
-            log.info("Marked as read: notificationId={}, userId={}", notificationId, userId);
             return ResponseEntity.ok().build();
         } catch (AppException e) {
             HttpStatusCode status = e.getErrorCode().getHttpStatusCode();
             return ResponseEntity.status(status).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Error marking as read: notificationId={}, user: {}", notificationId, auth.getName(), e);
             return ResponseEntity.badRequest().body(Map.of("error", "Lỗi server, vui lòng thử lại sau!"));
+        }
+    }
+
+    @PatchMapping("/read-all")
+    public ResponseEntity<?> markAllAsRead(Authentication auth) {
+        try {
+            if (auth == null || auth.getName() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            String userId = userService.getUserIdByUsername(auth.getName());
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            notificationService.markAllAsRead(userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Lỗi server, vui lòng thử lại sau!"));
         }
     }
 
@@ -154,8 +168,6 @@ public class NotificationController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid user"));
             }
-
-            log.info("Follow back request for notificationId: {}, userId: {}", notificationId, currentUserId);
 
             Notification notification = notificationService.findById(notificationId)
                     .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));

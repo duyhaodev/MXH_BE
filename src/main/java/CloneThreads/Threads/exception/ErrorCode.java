@@ -23,6 +23,11 @@ public enum ErrorCode {
     NOT_FOLLOWING(1015, "NOT_FOLLOWING", HttpStatus.NOT_FOUND),
     INVALID_NOTIFICATION(1016,"Invalid notification", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND(1017,"Notification not found", HttpStatus.NOT_FOUND),
+    INVALID_OTP_KEY(1018,"Invalid verification code", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(1019,"Verification code expired", HttpStatus.BAD_REQUEST),
+    MAX_OTP_ATTEMPTS(1020,"Max verification attempts reached. Please request a new code.", HttpStatus.TOO_MANY_REQUESTS),
+    USER_NOT_ENABLED(1021, "Your account is not verified. Please verify your email.", HttpStatus.FORBIDDEN),
+    WRONG_EMAIL_PASSWORD(1022, "Wrong email or password. Please try again.", HttpStatus.FORBIDDEN),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception", HttpStatus.BAD_REQUEST),
     ;
 

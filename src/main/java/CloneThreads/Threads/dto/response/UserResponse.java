@@ -21,4 +21,6 @@ public class UserResponse {
     String bio;
     int followersCount;
     int followingCount;
+    boolean enabled;
+    Integer verificationAttempts;
 }

@@ -74,8 +74,8 @@ public class NotificationService {
         }
 
         // Fetch fromUser displayName for message
-        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
         UserResponse fromUser = userService.getUser(fromUserId);
+        String fromUserDisplayName = fromUser.getFullName();
 
         // Check if notification already exists
         Optional<Notification> existingNotification = notificationRepo.findExistForPostNotification(toUserId, fromUserId, "like_post", postId);
@@ -144,7 +144,6 @@ public class NotificationService {
                     SocketIOClient client = socketIOServer.getClient(clientUUID);
                     if (client != null) {
                         client.sendEvent("new_notification", jsonPayload);
-                        log.info("Sent notification to user {} via socket {}", notification.getUserId(), clientUUID);
                     }
                 } catch (Exception e) {
                     log.error("Error sending socket to session {}", session.getSocketSessionId(), e);
@@ -205,6 +204,7 @@ public class NotificationService {
         if (existingNotification.isPresent()) {
             Notification notification = existingNotification.get();
             notification.setCreatedAt(LocalDateTime.now().withNano(0));
+            sendRealtimeNotification(notification, fromUser);
             return notificationRepo.save(notification);
         } else {
             Notification notification = Notification.builder()
@@ -228,7 +228,9 @@ public class NotificationService {
             return null;  // Không tạo noti nếu self-reply
         }
 
-        String fromUserDisplayName = userService.getUser(fromUserId).getFullName();
+        // Fetch fromUser displayName for message
+        UserResponse fromUser = userService.getUser(fromUserId);
+        String fromUserDisplayName = fromUser.getFullName();
 
         // Check if notification already exists
         Optional<Notification> existingNotification = notificationRepo.findExistForCommentNotification(toUserId, fromUserId, "reply_comment", parentCommentId);
@@ -248,6 +250,7 @@ public class NotificationService {
                     .isRead(false)
                     .createdAt(LocalDateTime.now().withNano(0))
                     .build();
+            sendRealtimeNotification(notification, fromUser);
             return notificationRepo.save(notification);
         }
     }
@@ -315,5 +318,10 @@ public class NotificationService {
         }
         notification.setIsRead(true);
         notificationRepo.save(notification);
+    }
+
+    @Transactional
+    public void markAllAsRead(String userId) {
+        notificationRepo.markAllAsRead(userId);
     }
 }

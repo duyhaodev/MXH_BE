@@ -26,7 +26,8 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {"/users",
-            "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh"};
+            "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/users/verify", "/users/resend-otp",
+            "/users/forgot-password", "/users/reset-password"};
 
 
     private CustomJwtDecoder customJwtDecoder;
@@ -58,9 +59,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(List.of("http://localhost:3000")); // origin FE
+        //cors.setAllowedOriginPatterns(List.of("https://*.ngrok-free.app")); // ngrok FE
+
         cors.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cors.setAllowedHeaders(List.of("*"));
-        // Nếu frontend dùng cookie/withCredentials: bật dòng dưới và KHÔNG dùng "*"
         cors.setAllowCredentials(true);
         cors.setMaxAge(3600L); // cache preflight trong 1h
 

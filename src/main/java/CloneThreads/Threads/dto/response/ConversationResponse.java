@@ -15,6 +15,7 @@ public class ConversationResponse {
     String type;
     String conversationName;
     String conversationAvatar;
+    String partnerId; // ID của người chat cùng
     Boolean unread;
     String lastMessageContent;
     LocalDateTime lastMessageTimestamp;

@@ -1,5 +1,6 @@
 package CloneThreads.Threads.controller;
 
+import CloneThreads.Threads.dto.request.UserUpdateRequest;
 import CloneThreads.Threads.dto.request.UserCreationRequest;
 import CloneThreads.Threads.dto.response.ApiResponse;
 import CloneThreads.Threads.dto.response.UserResponse;
@@ -27,6 +28,41 @@ public class UserController {
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.createUser(request))
+                .build();
+    }
+
+    @PostMapping("/verify")
+    ApiResponse<UserResponse> verifyUser(@RequestParam String email, @RequestParam String code) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.verifyUser(email, code))
+                .build();
+    }
+
+    @PostMapping("/resend-otp")
+    ApiResponse<String> resendOtp(@RequestParam String email) {
+        userService.resendOtp(email);
+        return ApiResponse.<String>builder()
+                .result("OTP has been resent to your email")
+                .build();
+    }
+
+    @PostMapping("/forgot-password")
+    ApiResponse<String> forgotPassword(@RequestParam String email) {
+        userService.forgotPassword(email);
+        return ApiResponse.<String>builder()
+                .result("OTP sent to your email")
+                .build();
+    }
+
+    @PostMapping("/reset-password")
+    ApiResponse<String> resetPassword(
+            @RequestParam String email,
+            @RequestParam String otp,
+            @RequestBody @Valid UserUpdateRequest request) {
+        
+        userService.resetPassword(email, otp, request.getPassword());
+        return ApiResponse.<String>builder()
+                .result("Password has been reset successfully")
                 .build();
     }
 
@@ -61,6 +97,4 @@ public class UserController {
                 .result(userService.editProfile(username, fullName, bio, avatar))
                 .build();
     }
-
-
 }
